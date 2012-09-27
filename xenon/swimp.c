@@ -4,6 +4,9 @@
 #include "video.h"
 #include <debug.h>
 #include <ppc/timebase.h>
+#include <byteswap.h>
+
+static unsigned int * pQ2Palette = NULL;
 
 void SWimp_BeginFrame( float camera_separation )
 {       
@@ -36,7 +39,15 @@ void SWimp_EndFrame (void)
     Xe_SetDestBlend(xe, XE_BLEND_INVSRCALPHA);
 
 	// Refresh texture cash
-    Xe_Surface_LockRect(xe, pVideoSurface, 0, 0, 0, 0, XE_LOCK_WRITE);
+    unsigned int * pBitmap = Xe_Surface_LockRect(xe, pVideoSurface, 0, 0, 0, 0, XE_LOCK_WRITE);
+    int i;
+    for(i = 0;i<(vid.width*vid.height);i++)
+	{
+		//Make an ARGB bitmap
+		unsigned int c = (pQ2Palette[vid.buffer[i]]) >> 8 | ( 0xFF << 24 );
+		pBitmap[i] = c;
+	}
+    
     Xe_Surface_Unlock(xe, pVideoSurface);
 
     // Select stream and shaders
@@ -66,7 +77,8 @@ void SWimp_SetPalette( const unsigned char *palette)
 {
 	if ( !palette )
 		palette = ( const unsigned char * ) sw_state.currentpalette;
-	/** Not possible ... **/
+		
+	pQ2Palette = palette;
 }
 
 void SWimp_Shutdown( void )
@@ -86,10 +98,8 @@ static qboolean SWimp_InitGraphics(qboolean unused) {
 	printf("pVideoSurface->wpitch : %d\n", pVideoSurface->wpitch);
 	printf("pVideoSurface->base : %p\n", pVideoSurface->base);
 
-	vid.rowbytes = pVideoSurface->wpitch;	
-	vid.buffer = pVideoSurface->base;
-	
-	memset(vid.buffer, 0xFF, pVideoSurface->wpitch * pVideoSurface->hpitch);
+	vid.rowbytes = vid.width;
+	vid.buffer = malloc(vid.rowbytes * vid.height);
 	
 	printf("pVideoSurface %p\n", pVideoSurface);
 	return true;

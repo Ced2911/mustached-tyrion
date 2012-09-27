@@ -85,7 +85,7 @@ void *Hunk_Begin (int maxsize)
 	membase = malloc(maxhunksize);
 	if (membase == NULL)
 		Sys_Error(ERR_FATAL, "unable to allocate %d bytes", maxsize);
-
+	memset(membase, 0, maxhunksize);
 	return membase;
 }
 
