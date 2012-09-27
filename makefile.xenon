@@ -39,9 +39,9 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 CC=xenon-gcc
 BASE_CFLAGS=-Dstricmp=strcasecmp -DGAME_HARD_LINKED -DREF_HARD_LINKED
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -fomit-frame-pointer -fno-strength-reduce -funroll-loops -fexpensive-optimizations -ffunction-sections -fdata-sections -g -fno-tree-vectorize -fno-tree-slp-vectorize -ftree-vectorizer-verbose=1 -Wall $(MACHDEP) $(INCLUDE) -DLIBXENON -D__BIG_ENDIAN__ -D__ppc__ -D__powerpc__ -D__POWERPC__ -DELF -D__BIGENDIAN__ -D__PPC__ -D__BIGENDIAN__
+RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -fomit-frame-pointer -fno-strength-reduce -funroll-loops -fexpensive-optimizations -g -fno-tree-vectorize -fno-tree-slp-vectorize -ftree-vectorizer-verbose=1 -Wall $(MACHDEP) $(INCLUDE) -DLIBXENON -D__BIG_ENDIAN__ -D__ppc__ -D__powerpc__ -D__POWERPC__ -DELF -D__BIGENDIAN__ -D__PPC__ -D__BIGENDIAN__
 DEBUG_CFLAGS=$(BASE_CFLAGS) $(RELEASE_CFLAGS)
-LDFLAGS=-g $(MACHDEP) -Wl,--gc-sections -Wl,-Map,$(notdir $@).map -L$(DEVKITXENON)/usr/lib -L$(DEVKITXENON)/xenon/lib/32 -lxenon -lm -lfat -T $(LDSCRIPT)
+LDFLAGS=-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(DEVKITXENON)/usr/lib -L$(DEVKITXENON)/xenon/lib/32 -lxenon -lm -lfat -T $(LDSCRIPT)
 
 SHLIBEXT=so
 
@@ -567,59 +567,9 @@ $(BUILDDIR)/ref_soft/r_sprite.o :     $(REF_SOFT_DIR)/r_sprite.c
 $(BUILDDIR)/ref_soft/r_surf.o :       $(REF_SOFT_DIR)/r_surf.c
 	$(DO_SHLIB_CC)
 
-$(BUILDDIR)/ref_soft/r_aclipa.o :     $(LINUX_DIR)/r_aclipa.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_draw16.o :     $(LINUX_DIR)/r_draw16.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_drawa.o :      $(LINUX_DIR)/r_drawa.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_edgea.o :      $(LINUX_DIR)/r_edgea.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_scana.o :      $(LINUX_DIR)/r_scana.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_spr8.o :       $(LINUX_DIR)/r_spr8.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_surf8.o :      $(LINUX_DIR)/r_surf8.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/math.o :         $(LINUX_DIR)/math.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/d_polysa.o :     $(LINUX_DIR)/d_polysa.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/r_varsa.o :      $(LINUX_DIR)/r_varsa.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/sys_dosa.o :     $(LINUX_DIR)/sys_dosa.s
-	$(DO_SHLIB_AS)
-
 $(BUILDDIR)/ref_soft/q_shared.o :     $(GAME_DIR)/q_shared.c
 	$(DO_SHLIB_CC)
 
-$(BUILDDIR)/ref_soft/q_shlinux.o :    $(LINUX_DIR)/q_shlinux.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/ref_soft/glob.o :         $(LINUX_DIR)/glob.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/ref_soft/rw_svgalib.o :   $(LINUX_DIR)/rw_svgalib.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/ref_soft/d_copy.o :       $(LINUX_DIR)/d_copy.s
-	$(DO_SHLIB_AS)
-
-$(BUILDDIR)/ref_soft/rw_in_svgalib.o : $(LINUX_DIR)/rw_in_svgalib.c
-	$(DO_SHLIB_CC)
-
-$(BUILDDIR)/ref_soft/rw_x11.o :       $(LINUX_DIR)/rw_x11.c
-	$(DO_SHLIB_CC)
 
 #############################################################################
 # MISC

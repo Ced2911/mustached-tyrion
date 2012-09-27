@@ -18,6 +18,9 @@
 
 #include <libfat/fat.h>
 
+extern void network_init_sys();
+extern void threading_init();
+
 void main (int argc, char **argv)
 {
 	// Init libxenon
@@ -25,6 +28,11 @@ void main (int argc, char **argv)
 	console_init();
 
 	xenon_make_it_faster(XENON_SPEED_FULL);
+
+#if 1
+	threading_init();
+	network_init_sys();
+#endif
 
 	usb_init();
 	usb_do_poll();

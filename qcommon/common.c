@@ -1399,8 +1399,10 @@ void Qcommon_Init (int argc, char **argv)
 {
 	char	*s;
 
+#if 0
 	if (setjmp (abortframe) )
 		Sys_Error ("Error during initialization");
+#endif
 
 	z_chain.next = z_chain.prev = &z_chain;
 
@@ -1492,10 +1494,10 @@ void Qcommon_Frame (int msec)
 {
 	char	*s;
 	int		time_before, time_between, time_after;
-
+#if 0
 	if (setjmp (abortframe) )
 		return;			// an ERR_DROP was thrown
-
+#endif
 	if ( log_stats->modified )
 	{
 		log_stats->modified = false;
