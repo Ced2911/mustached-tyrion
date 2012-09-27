@@ -35,6 +35,7 @@ void Sys_Quit (void)
 
 void	Sys_UnloadGame (void)
 {
+	TR;
 }
 
 void	*Sys_GetGameAPI (void *parms)
@@ -62,6 +63,7 @@ void Sys_AppActivate (void)
 
 void Sys_CopyProtect (void)
 {
+	TR
 }
 
 char *Sys_GetClipboardData( void )
@@ -73,7 +75,7 @@ char *Sys_GetClipboardData( void )
 static byte *membase;
 static int maxhunksize;
 static int curhunksize;
-#define CACHE_LINE_SIZE 128
+#define CACHE_LINE_SIZE 256
 
 void *Hunk_Begin (int maxsize)
 {
@@ -92,7 +94,8 @@ void *Hunk_Alloc (int size)
 	byte *buf;
 
 	// round to cacheline
-	size = (size+CACHE_LINE_SIZE)&~CACHE_LINE_SIZE;
+	size = (size+(CACHE_LINE_SIZE-1))&~(CACHE_LINE_SIZE-1);
+	//size = (size+31)&~31;
 	if (curhunksize + size > maxhunksize)
 		Sys_Error(ERR_FATAL, "Hunk_Alloc overflow");
 	buf = membase + curhunksize;
@@ -119,7 +122,7 @@ void Hunk_Free (void *base)
 
 //===============================================================================
 
-int		Sys_Milliseconds (void)
+int	Sys_Milliseconds (void)
 {
 	struct timeval tp;
 	struct timezone tzp;
@@ -140,7 +143,7 @@ int		Sys_Milliseconds (void)
 
 //===============================================================================
 
-void	Sys_Mkdir (char *path)
+void Sys_Mkdir (char *path)
 {
 	mkdir (path, 0777);
 }

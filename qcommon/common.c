@@ -188,9 +188,12 @@ void Com_Error (int code, char *fmt, ...)
 	
 	if (code == ERR_DISCONNECT)
 	{
+		Com_Printf ("********************\nERROR: %s\n********************\n", "ERR_DISCONNECT");
 		CL_Drop ();
 		recursive = false;
+#if 0	
 		longjmp (abortframe, -1);
+#endif
 	}
 	else if (code == ERR_DROP)
 	{
@@ -198,7 +201,9 @@ void Com_Error (int code, char *fmt, ...)
 		SV_Shutdown (va("Server crashed: %s\n", msg), false);
 		CL_Drop ();
 		recursive = false;
+#if 0		
 		longjmp (abortframe, -1);
+#endif		
 	}
 	else
 	{

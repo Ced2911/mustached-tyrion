@@ -29,7 +29,7 @@ void main (int argc, char **argv)
 
 	xenon_make_it_faster(XENON_SPEED_FULL);
 
-#if 1
+#if 0
 	threading_init();
 	network_init_sys();
 #endif
@@ -54,9 +54,18 @@ void main (int argc, char **argv)
 	int newargc = sizeof (newargv) / sizeof (char *);
 	
 	Qcommon_Init (newargc, newargv);
+	
+	console_close();
 
+	int	time, oldtime, newtime;
+	oldtime = Sys_Milliseconds();
 	while (1)
 	{
-		Qcommon_Frame (0.1);
+		do {
+			newtime = Sys_Milliseconds ();
+			time = newtime - oldtime;
+		} while (time < 1);
+		Qcommon_Frame (time);
+		oldtime = newtime;
 	}
 }
