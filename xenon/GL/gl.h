@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // inconsistent dll linkage warning
-#pragma warning (disable: 4273)
+//#pragma warning (disable: 4273)
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
