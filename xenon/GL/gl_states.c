@@ -1,5 +1,9 @@
 #include "gl_xenos.h"
 
+static GLenum gl_cull_mode = 0;
+static GLboolean gl_cull_enable = GL_FALSE;
+static GLenum gl_front_face = 0;
+
 void glShadeModel (GLenum mode)
 {
 	
@@ -9,6 +13,8 @@ void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
 {
 	Xe_SetScissor(xe, 1, x, y, x+width, y+height);
 }
+
+
 
 /***********************************************************************
  * Clear
@@ -34,6 +40,51 @@ void glClearDepth(GLclampd depth)
 	
 }
 
+/***********************************************************************
+ * Cull
+ ***********************************************************************/
+static void updateCullMode()
+{
+	if (gl_cull_enable == GL_FALSE)
+	{
+		// disable culling
+		Xe_SetCullMode(xe, XE_CULL_NONE);
+		return;
+	}
+
+	if (gl_front_face == GL_CCW)
+	{
+		if (gl_cull_mode == GL_BACK)
+			Xe_SetCullMode(xe, XE_CULL_CW);
+		else if (gl_cull_mode == GL_FRONT)
+			Xe_SetCullMode(xe, XE_CULL_CCW);
+		else if (gl_cull_mode == GL_FRONT_AND_BACK)
+			; // do nothing; we cull in software in GL_SubmitVertexes instead
+		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
+	}
+	else if (gl_front_face == GL_CW)
+	{
+		if (gl_cull_mode == GL_BACK)
+			Xe_SetCullMode(xe, XE_CULL_CCW);
+		else if (gl_cull_mode == GL_FRONT)
+			Xe_SetCullMode(xe, XE_CULL_CW);
+		else if (gl_cull_mode == GL_FRONT_AND_BACK)
+			; // do nothing; we cull in software in GL_SubmitVertexes instead
+		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
+	}
+	else xe_gl_error ("GL_UpdateCull: illegal glFrontFace\n");
+	Xe_SetCullMode(xe, gl_cull_mode);
+}
+void glFrontFace (GLenum mode)
+{
+	gl_front_face = mode;
+	updateCullMode();
+}
+void glCullFace (GLenum mode)
+{
+	gl_cull_mode = mode;
+	updateCullMode();
+}
 /***********************************************************************
  * Depth
  ***********************************************************************/
@@ -91,6 +142,14 @@ void glAlphaFunc (GLenum func, GLclampf ref)
 {
 	Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
 	Xe_SetAlphaRef(xe, ref);
+}
+void glDepthRange (GLclampd zNear, GLclampd zFar)
+{
+	//xe_gl_log("glDepthRange Not implemented\n");
+}
+void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	//xe_gl_log("glViewport Not implemented\n");
 }
 
 /***********************************************************************
@@ -183,7 +242,10 @@ void GlEnableDisable(GLenum cap, int enable)
 		xeTmus[xeCurrentTMU].enabled = enable;
 		return;
 
-	case GL_CULL_FACE:		
+	case GL_CULL_FACE:
+		if (!enable)
+			gl_cull_enable = GL_FALSE;
+		updateCullMode();
 		return;
 
 	case GL_FOG:
@@ -210,4 +272,33 @@ void glEnable(GLenum cap)
 void glDisable(GLenum cap)
 {
 	GlEnableDisable(cap, 0);
+}
+
+
+
+
+/***********************************************************************
+ * Misc
+ ***********************************************************************/
+static int fill_back = 0;
+static int fill_front = 0;
+void glPolygonMode (GLenum face, GLenum mode)
+{
+	int xmode = 0;
+	
+	if (mode == GL_LINE)
+		xmode = XE_FILL_WIREFRAME;
+	else if (mode == GL_POINT)
+		xmode = XE_FILL_POINT;
+	else 
+		xmode = XE_FILL_SOLID;
+	
+	if (face == GL_FRONT)
+		fill_front = xmode;
+	else if (face == GL_BACK)
+		fill_back = xmode;
+	else
+		fill_back = fill_front = xmode;
+	
+	Xe_SetFillMode(xe, fill_front, fill_back);
 }

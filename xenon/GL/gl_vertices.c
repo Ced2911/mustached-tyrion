@@ -81,7 +81,7 @@ void GL_SubmitVertexes()
     Xe_SetShader(xe, SHADER_TYPE_VERTEX, pVertexShader, 0);
     
     // 
-    if (xeTmus[xeCurrentTMU].enabled) {
+    if (xeTmus[xeCurrentTMU].enabled && xeTmus[xeCurrentTMU].boundtexture) {
 		Xe_SetTexture(xe, 0, xeTmus[xeCurrentTMU].boundtexture->teximg);
 	}
 	else {
@@ -178,4 +178,40 @@ void glTexCoord2fv (const GLfloat *v)
 {
 	xe_TextCoord[0].u = v[0];
 	xe_TextCoord[0].v = v[1];
+}
+
+void glEnableClientState(GLenum array)
+{
+	
+}
+
+void glPointSize(GLfloat size)
+{
+	
+}
+
+void glDrawBuffer (GLenum mode)
+{
+	
+}
+
+void glFinish (void)
+{
+	
+}
+void glArrayElement(GLint i)
+{
+	
+}
+
+void glColorPointer(GLint  	size,
+ 	GLenum  	type,
+ 	GLsizei  	stride,
+ 	const GLvoid *  	pointer)
+ 	{
+		
+	}
+
+GLenum glGetError(){
+	return GL_NO_ERROR;
 }

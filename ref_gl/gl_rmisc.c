@@ -91,7 +91,6 @@ typedef struct _TargaHeader {
 	unsigned char	pixel_size, attributes;
 } TargaHeader;
 
-
 /* 
 ================== 
 GL_ScreenShot_f

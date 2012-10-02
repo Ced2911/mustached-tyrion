@@ -71,13 +71,11 @@ typedef struct vidmode_s
 
 vidmode_t vid_modes[] =
 {
-	/*
     { "Mode 0: 320x240",   320, 240,   0 },
     { "Mode 1: 400x300",   400, 300,   1 },
     { "Mode 2: 512x384",   512, 384,   2 },
     { "Mode 3: 640x480",   640, 480,   3 },
     { "Mode 4: 800x600",   800, 600,   4 },
-    */ 
     { "Mode 5: 960x720",   960, 720,   5 },
     { "Mode 6: 1024x768",  1024, 768,  6 },
     { "Mode 7: 1152x864",  1152, 864,  7 },
@@ -116,6 +114,7 @@ void	VID_Init (void)
     ri.FS_LoadFile = FS_LoadFile;
     ri.FS_FreeFile = FS_FreeFile;
     ri.FS_Gamedir = FS_Gamedir;
+    ri.Vid_MenuInit = VID_MenuInit;
 	ri.Vid_NewWindow = VID_NewWindow;
     ri.Cvar_Get = Cvar_Get;
     ri.Cvar_Set = Cvar_Set;
@@ -123,7 +122,7 @@ void	VID_Init (void)
     ri.Vid_GetModeInfo = VID_GetModeInfo;
 
     re = GetRefAPI(ri);
-    
+#ifdef USE_SOFT
 	xe=&_xe;
 	
 	Xe_Init(xe);
@@ -182,13 +181,13 @@ void	VID_Init (void)
 	
 	pVideoSurface = NULL;
 	
+#endif	
 	if (re.api_version != API_VERSION)
         Com_Error (ERR_FATAL, "Re has incompatible api_version");
     
         // call the init function
     if (re.Init (NULL, NULL) == -1)
 		Com_Error (ERR_FATAL, "Couldn't start refresh");
-	
 }
 
 void	VID_Shutdown (void)

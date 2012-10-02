@@ -1,6 +1,9 @@
 #include "gl_xenos.h"
 #include <string.h>
 #include <malloc.h>
+#include <debug.h>
+
+#define XE_MAX_TEXTURE 50000
 
 glXeSurface_t * glXeSurfaces = NULL;
 
@@ -21,6 +24,13 @@ void glTexEnvi (GLenum target, GLenum pname, GLint param)
 /***********************************************************************
  * Create/Gen/Delete images
  ***********************************************************************/
+void XeGLInitTextures()
+{
+	glXeSurfaces = (glXeSurface_t *)malloc(sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
+	memset(glXeSurfaces, 0, sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
+}
+ 
+ 
 static int d3d_TextureExtensionNumber = 1;
 int xeCurrentTMU = 0;
 
@@ -37,11 +47,13 @@ static void Xe_InitTexture(glXeSurface_t *tex)
 
 static glXeSurface_t *Xe_AllocTexture(void)
 {
+	int i = 0;
 	glXeSurface_t *tex;
 
 	// find a free texture
-	for (tex = glXeSurfaces; tex; tex = tex->next)
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
 	{
+		tex = &glXeSurfaces[i];
 		// if either of these are 0 (or NULL) we just reuse it
 		if (!tex->teximg)
 		{
@@ -56,28 +68,21 @@ static glXeSurface_t *Xe_AllocTexture(void)
 		}
 	}
 
-	// nothing to reuse so create a new one
-	// clear to 0 is required so that D3D_SAFE_RELEASE is valid
-	tex = (glXeSurface_t *) malloc (sizeof (glXeSurface_t));
-	memset (tex, 0, sizeof (glXeSurface_t));
-	Xe_InitTexture(tex);
+	xe_gl_error("Xe_AllocTexture: out of textures!!!\n");
 
-	// link in
-	tex->next = glXeSurfaces;
-	glXeSurfaces = tex;
-
-	// return the new one
-	return tex;
+	return NULL;
 }
 
 
 static void Xe_ReleaseTextures (void)
 {
 	glXeSurface_t *tex;
+	int i;
 
 	// explicitly NULL all textures and force texparams to dirty
-	for (tex = glXeSurfaces; tex; tex = tex->next)
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
 	{
+		tex = &glXeSurfaces[i];
 		Xe_InitTexture(tex);
 	}
 } 
@@ -87,7 +92,9 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 	int i;
 	glXeSurface_t *tex;
 
-	for (tex = glXeSurfaces; tex; tex = tex->next) {
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
+	{
+		tex = &glXeSurfaces[i];
 		for (i = 0; i < n; i++) {
 			if (tex->glnum == textures[i]) {
 				Xe_InitTexture(tex);
@@ -111,6 +118,8 @@ void glGenTextures(GLsizei n, GLuint *textures)
 
 void glBindTexture(GLenum target, GLuint texture)
 {
+	int i;
+	
 	glXeSurface_t *tex;
 	if (target != GL_TEXTURE_2D) 
 		return;
@@ -120,19 +129,20 @@ void glBindTexture(GLenum target, GLuint texture)
 		xeTmus[xeCurrentTMU].boundtexture = NULL;
 		return;
 	}
-	
 	xeTmus[xeCurrentTMU].boundtexture = NULL;
 	
 	// find a texture
-	for (tex = glXeSurfaces; tex; tex = tex->next)
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
 	{
-		if (tex->glnum == texture)
+		tex = &glXeSurfaces[i];
+		
+		if (tex && tex->glnum && tex->glnum == texture)
 		{
 			xeTmus[xeCurrentTMU].boundtexture = tex;
 			break;
 		}
 	}
-
+	
 	// did we find it?
 	if (!xeTmus[xeCurrentTMU].boundtexture)
 	{
@@ -147,11 +157,10 @@ void glBindTexture(GLenum target, GLuint texture)
 		if (texture > d3d_TextureExtensionNumber)
 			d3d_TextureExtensionNumber = texture;
 	}
-
 	// this should never happen
 	if (!xeTmus[xeCurrentTMU].boundtexture) 
-		xe_gl_error("glBindTexture: out of textures!!!");
-
+		xe_gl_error("glBindTexture: out of textures!!!\n");
+		
 	// dirty the params
 	xeTmus[xeCurrentTMU].texparamdirty = TRUE;
 }
@@ -169,8 +178,10 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 	if (xeTmus[xeCurrentTMU].boundtexture && xeTmus[xeCurrentTMU].boundtexture->teximg ) {
 		surf = xeTmus[xeCurrentTMU].boundtexture->teximg;
 	}
+	return;
 	
 	if (surf) {
+		#if 0
 		uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 		uint8_t * srcdata = (uint8_t*) pixels;
 		uint8_t * dstdata = surfbuf;
@@ -197,12 +208,12 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 				}
 			}
 		}
-
+		#endif
 		Xe_Surface_Unlock(xe, surf);
 	}
 }
 
-void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum glformat, GLenum type, const GLvoid *pixels)
+void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum pixelformat, GLenum type, const GLvoid *pixels)
 {
 	int format;
 	if (type != GL_UNSIGNED_BYTE) {
@@ -215,16 +226,45 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 	if (!xeTmus[xeCurrentTMU].boundtexture)
 		return;
 		
+		
+	int srcbytes = 4;
+	int dstbytes = 4;
+	
 	// validate format
-	switch (glformat)
+	switch (internalformat)
 	{
 	case 1:
 	case GL_LUMINANCE:
+		dstbytes = 1;
 		format = XE_FMT_8;
+		break;
+	case 3:
+	case GL_RGB:
+		dstbytes = 4;
+		format = XE_FMT_ARGB|XE_FMT_8888;
 		break;
 	case 4:
 	case GL_RGBA:
+		dstbytes = 4;
 		format = XE_FMT_ARGB|XE_FMT_8888;
+		break;
+	default:
+	TR
+		xe_gl_error ("invalid texture internal format\n");
+	}
+	switch (pixelformat)
+	{
+	case 1:
+	case GL_LUMINANCE:
+		srcbytes = 1;
+		break;
+	case 3:
+	case GL_RGB:
+		srcbytes = 4;
+		break;
+	case 4:
+	case GL_RGBA:
+		srcbytes = 4;
 		break;
 	default:
 		xe_gl_error ("invalid texture internal format\n");
@@ -234,11 +274,11 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 	
 	xeTmus[xeCurrentTMU].boundtexture->teximg = surf;
 	
+	return;
+	
 	uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 	uint8_t * srcdata = (uint8_t*) pixels;
 	uint8_t * dstdata = surfbuf;
-	int srcbytes = 4;
-	int dstbytes = 4;
 	int y, x;
 
 	for (y = 0; y <height; y++) {
@@ -251,6 +291,12 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 				dstdata[2] = srcdata[2];
 				dstdata[3] = srcdata[3];
 				
+				srcdata += srcbytes;
+				dstdata += dstbytes;
+			}
+			if (srcbytes == 1 && dstbytes == 1) {
+				
+				dstdata[0] = srcdata[0];				
 				srcdata += srcbytes;
 				dstdata += dstbytes;
 			}

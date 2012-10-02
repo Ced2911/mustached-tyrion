@@ -12,7 +12,7 @@
  * Vertices
  ***********************************************************************/
  
-#define XE_MAX_VERTICES	16*1024 // 16Mo
+#define XE_MAX_VERTICES	16*1024*100
  
 typedef struct {	
     float x, y, z, w;
@@ -56,8 +56,6 @@ typedef struct glXeSurface_s{
 	GLenum internalformat;
 	
 	struct XenosSurface * teximg;
-	
-	struct glXeSurface_s * next;
 } glXeSurface_t;
 
 glXeSurface_t * glXeSurfaces;
@@ -121,3 +119,4 @@ void xe_gl_error(const char * format, ...);
 void xe_gl_log(const char * format, ...);
 void XenonGLInit();
 void XenonGLDisplay();
+void XeGLInitTextures();

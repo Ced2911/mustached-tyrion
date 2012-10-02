@@ -50,6 +50,8 @@ void XenonGLInit(){
 	xe_CurrentColor.u32 = 0xFFFFFFFF;
 	
 	// init textures
+	XeGLInitTextures();
+	
 	// not yet ...
 	Xe_InvalidateState(xe);
 	Xe_SetClearColor(xe, 0);
@@ -95,6 +97,7 @@ void XenonGLDisplay()
 void xe_gl_error(const char * format, ...)
 {
 	printf(format);
+	delay(1);
 };
 void xe_gl_log(const char * format, ...)
 {

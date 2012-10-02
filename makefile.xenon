@@ -236,7 +236,7 @@ $(BUILDDIR)/quake2_xenon : $(QUAKE2_OBJS) $(QUAKE2_SOFT)
 	cp quake2_xenon.elf32 /srv/tftp/tftpboot/xenon
 	
 $(BUILDDIR)/quake2_xenon_gl : $(QUAKE2_OBJS) $(QUAKE2_GL)
-	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_GL) $(LDFLAGS) gl.a
+	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_GL) $(LDFLAGS) gl.a -lxenon
 	@echo converting and stripping ... $(notdir $@)
 	xenon-objcopy -O elf32-powerpc --adjust-vma 0x80000000 $@ quake2_xenon.elf32
 	xenon-strip quake2_xenon.elf32
