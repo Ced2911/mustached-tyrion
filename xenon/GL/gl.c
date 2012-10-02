@@ -6,9 +6,9 @@
 #include "gl_xenos.h"
 
 typedef unsigned int DWORD;
-//#include "shaders/opengl.ps.h"
-#define g_xps_ps_test_main g_xps_ps_main
-#include "shaders/opengl.ps.test.h"
+#include "shaders/opengl.ps.color.h"
+#include "shaders/opengl.ps.modulate.h"
+#include "shaders/opengl.ps.texture.h"
 #include "shaders/opengl.vs.h"
 
 void XenonGLInit(){
@@ -29,8 +29,17 @@ void XenonGLInit(){
 		}
 	};
 	
-	pPixelShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_main);
-	Xe_InstantiateShader(xe, pPixelShader, 0);
+	pPixelTextureShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_texture);
+	Xe_InstantiateShader(xe, pPixelTextureShader, 0);
+	
+	pPixelModulateShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_modulate);
+	Xe_InstantiateShader(xe, pPixelModulateShader, 0);
+	
+	pPixelColorShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_color);
+	Xe_InstantiateShader(xe, pPixelColorShader, 0);
+	
+	pCurrentPs = g_xps_ps_color;
+	pCurrentTexturedPs = g_xps_ps_texture;
 
 	pVertexShader = Xe_LoadShaderFromMemory(xe, (void*) g_xvs_vs_main);
 	Xe_InstantiateShader(xe, pVertexShader, 0);

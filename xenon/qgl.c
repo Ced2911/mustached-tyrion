@@ -3348,7 +3348,6 @@ qboolean QGL_Init( const char *dllname )
 	qglVertex3f                  = 	dllVertex3f                  = glVertex3f;
 	qglVertex3fv                 = 	dllVertex3fv                 = glVertex3fv;
 	qglViewport                  = 	dllViewport                  = glViewport;
-
 #endif	
 	qglGetString = glGetString;
 	return true;

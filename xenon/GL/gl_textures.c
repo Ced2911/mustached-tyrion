@@ -59,10 +59,32 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 /***********************************************************************
  * Texture environnement
  ***********************************************************************/
+
 void glTexEnvf (GLenum target, GLenum pname, GLfloat param)
 {
-	/** Do shader work here !! **/
+	if (target != GL_TEXTURE_ENV)
+		xe_gl_error("glTexEnvf: unimplemented target\n");
 	
+	if (!xeTmus[xeCurrentTMU].boundtexture) return;
+	if (!xeTmus[xeCurrentTMU].boundtexture->teximg ) return;
+	if (target != GL_TEXTURE_2D) return;
+	
+	/** Do shader work here !! **/
+	switch (pname)
+	{
+		case GL_TEXTURE_ENV_MODE:
+		switch ((GLint)param)
+		{
+			case GL_REPLACE:
+			xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_REPLACE;
+			break;
+
+			case GL_MODULATE:
+			xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_MODULATE;			
+			break;
+			
+		}
+	}
 }
 
 void glTexEnvi (GLenum target, GLenum pname, GLint param)
@@ -267,18 +289,18 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 			for (x = xoffset; x < (xoffset + width); x++) {
 				if (srcbytes == 4 && dstbytes == 4) {
 					dstdata[0] = srcdata[3];
-					dstdata[2] = srcdata[2];
-					dstdata[1] = srcdata[1];
-					dstdata[0] = srcdata[0];
+					dstdata[3] = srcdata[2];
+					dstdata[2] = srcdata[1];
+					dstdata[1] = srcdata[0];
 
 					srcdata += srcbytes;
 					dstdata += dstbytes;
 				}
 				if (srcbytes == 3 && dstbytes == 4) {
-					dstdata[3] = 0xff;
-					dstdata[2] = srcdata[2];
-					dstdata[1] = srcdata[1];
-					dstdata[0] = srcdata[0];
+					dstdata[0] = 0xff;
+					dstdata[3] = srcdata[2];
+					dstdata[2] = srcdata[1];
+					dstdata[1] = srcdata[0];
 
 					srcdata += srcbytes;
 					dstdata += dstbytes;

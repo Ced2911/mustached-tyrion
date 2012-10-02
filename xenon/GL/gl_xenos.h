@@ -64,13 +64,7 @@ typedef struct glXeTmu_s{
 	glXeSurface_t * boundtexture;
 	int enabled;
 	
-	unsigned int colorop;
-	unsigned int colorarg1;
-	unsigned int colorarg2;
-	unsigned int alphaop;
-	unsigned int alphaarg1;
-	unsigned int alphaarg2;
-	unsigned int texcoordindex;
+	int texture_env_mode;
 
 	int texenvdirty;
 	int texparamdirty;
@@ -109,7 +103,11 @@ void XeGlCheckDirtyMatrix(xe_matrix_t *m);
  ***********************************************************************/
 struct XenosDevice _xe, *xe;
 struct XenosShader * pVertexShader;
-struct XenosShader * pPixelShader;
+struct XenosShader * pPixelColorShader;
+struct XenosShader * pPixelModulateShader;
+struct XenosShader * pPixelTextureShader;
+struct XenosShader * pCurrentPs;
+struct XenosShader * pCurrentTexturedPs;
 struct XenosVertexBuffer * pVbGL;
 
 /***********************************************************************
