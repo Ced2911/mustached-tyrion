@@ -81,7 +81,7 @@ void XenonGLDisplay()
     
     // Resolve
     Xe_Resolve(xe);
-    while(!Xe_IsVBlank(xe));
+    //while(!Xe_IsVBlank(xe));
     Xe_Sync(xe);
     
     // Reset states

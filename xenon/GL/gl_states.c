@@ -88,6 +88,51 @@ void glCullFace (GLenum mode)
 /***********************************************************************
  * Depth
  ***********************************************************************/
+int Gl_ZCmp_2_Xe(GLenum mode)
+{
+	// xenos use reverse Z cmp
+	int cmp = 0;
+	switch (mode)
+	{
+	case GL_NEVER:
+		cmp = XE_CMP_NEVER;
+		break;
+
+	case GL_LESS:
+		// cmp = XE_CMP_LESS;
+		cmp = XE_CMP_GREATER;
+		break;
+
+	case GL_LEQUAL:
+		//cmp = XE_CMP_LESSEQUAL;
+		cmp = XE_CMP_GREATEREQUAL;
+		break;
+
+	case GL_EQUAL:
+		cmp = XE_CMP_EQUAL;
+		break;
+
+	case GL_GREATER:
+		// cmp = XE_CMP_GREATER;
+		cmp = XE_CMP_LESS;
+		break;
+
+	case GL_NOTEQUAL:
+		cmp = XE_CMP_NOTEQUAL;
+		break;
+
+	case GL_GEQUAL:
+		//cmp = XE_CMP_GREATEREQUAL;
+		cmp = XE_CMP_LESSEQUAL;
+		break;
+
+	case GL_ALWAYS:
+	default:
+		cmp = XE_CMP_ALWAYS;
+		break;
+	}
+}
+ 
 int Gl_Cmp_2_Xe(GLenum mode)
 {
 	int cmp = 0;
@@ -126,10 +171,11 @@ int Gl_Cmp_2_Xe(GLenum mode)
 		cmp = XE_CMP_ALWAYS;
 		break;
 	}
-}
+} 
  
 void glDepthFunc (GLenum func)
 {
+	// use reverse Z
 	Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
 }
 
@@ -210,11 +256,18 @@ void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 	}
 	return blend;
 }
- 
+
+static int old_src_blend = XE_BLEND_ONE;
+static int old_dst_blend = XE_BLEND_ZERO;
+static int old_blend_op = XE_BLENDOP_ADD;
+
 void glBlendFunc (GLenum sfactor, GLenum dfactor)
 {
-	Xe_SetSrcBlend(xe, Gl_Blend_2_Xe(sfactor));
-	Xe_SetDestBlend(xe, Gl_Blend_2_Xe(dfactor));
+	old_src_blend = Gl_Blend_2_Xe(sfactor);
+	old_dst_blend = Gl_Blend_2_Xe(dfactor);
+	
+	Xe_SetSrcBlend(xe, old_src_blend);
+	Xe_SetDestBlend(xe, old_dst_blend);
 }
 /***********************************************************************
  * Blend
@@ -231,6 +284,11 @@ void GlEnableDisable(GLenum cap, int enable)
 			Xe_SetSrcBlend(xe, XE_BLEND_ONE);
 			Xe_SetDestBlend(xe, XE_BLEND_ZERO);
 			Xe_SetBlendOp(xe, XE_BLENDOP_ADD);
+		}
+		else {
+			Xe_SetSrcBlend(xe, old_src_blend);
+			Xe_SetDestBlend(xe, old_dst_blend);
+			Xe_SetBlendOp(xe, old_blend_op);
 		}
 		break;
 

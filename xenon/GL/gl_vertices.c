@@ -204,13 +204,10 @@ void glArrayElement(GLint i)
 	
 }
 
-void glColorPointer(GLint  	size,
- 	GLenum  	type,
- 	GLsizei  	stride,
- 	const GLvoid *  	pointer)
- 	{
+void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
+{
 		
-	}
+}
 
 GLenum glGetError(){
 	return GL_NO_ERROR;
