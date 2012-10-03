@@ -82,6 +82,7 @@ void GL_SubmitVertexes()
     // set texture
     if (xeTmus[xeCurrentTMU].enabled && xeTmus[xeCurrentTMU].boundtexture) {
 		if (xeTmus[xeCurrentTMU].texture_env_mode == GL_REPLACE) {
+			// tex
 			Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelTextureShader, 0);
 		} else {
 			// Color * tex

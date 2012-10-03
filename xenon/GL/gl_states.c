@@ -45,6 +45,7 @@ void glClearDepth(GLclampd depth)
  ***********************************************************************/
 static void updateCullMode()
 {
+#if 1
 	if (gl_cull_enable == GL_FALSE)
 	{
 		// disable culling
@@ -74,6 +75,19 @@ static void updateCullMode()
 	}
 	else xe_gl_error ("GL_UpdateCull: illegal glFrontFace\n");
 	Xe_SetCullMode(xe, gl_cull_mode);
+#else 
+	if (gl_cull_enable == GL_FALSE)
+	{
+		// disable culling
+		Xe_SetCullMode(xe, XE_CULL_NONE);
+		return;
+	}
+	if (gl_front_face == GL_CCW) {
+		Xe_SetCullMode(xe, XE_CULL_CW);
+	} else {
+		Xe_SetCullMode(xe, XE_CULL_CCW);
+	}
+#endif
 }
 void glFrontFace (GLenum mode)
 {
@@ -186,8 +200,8 @@ void glDepthMask (GLboolean flag)
 
 void glAlphaFunc (GLenum func, GLclampf ref)
 {
-	Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
-	Xe_SetAlphaRef(xe, ref);
+	//Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
+	//Xe_SetAlphaRef(xe, ref * 255);
 }
 void glDepthRange (GLclampd zNear, GLclampd zFar)
 {
@@ -293,7 +307,7 @@ void GlEnableDisable(GLenum cap, int enable)
 		break;
 
 	case GL_ALPHA_TEST:
-		Xe_SetAlphaTestEnable(xe, enable);
+		Xe_SetAlphaTestEnable(xe, enable?0:1);
 		break;
 
 	case GL_TEXTURE_2D:
