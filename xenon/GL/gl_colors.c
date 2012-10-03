@@ -6,13 +6,12 @@
 
 unsigned int Gl_Color_2_Xe (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-	alpha = 255;
 	return COLOR_ARGB
 	(
-		BYTE_CLAMP (alpha * 255.0f),
-		BYTE_CLAMP (red * 255.0f),
-		BYTE_CLAMP (green * 255.0f),
-		BYTE_CLAMP (blue * 255.0f)
+		BYTE_CLAMP (alpha),
+		BYTE_CLAMP (red),
+		BYTE_CLAMP (green),
+		BYTE_CLAMP (blue)
 	);
 }
 
@@ -50,7 +49,6 @@ void glColor4fv (const GLfloat *v)
 {
 	GL_SetColor (v[0] * 255, v[1] * 255, v[2] * 255, v[3] * 255);
 }
-
 
 void glColor4ubv (const GLubyte *v)
 {

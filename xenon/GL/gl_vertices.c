@@ -74,8 +74,6 @@ void GL_SubmitVertexes()
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
 	
-	// set states
-    Xe_SetCullMode(xe, XE_CULL_NONE);
     Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);    
     Xe_SetShader(xe, SHADER_TYPE_VERTEX, pVertexShader, 0);
     
@@ -93,8 +91,7 @@ void GL_SubmitVertexes()
 	else {
 		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelColorShader, 0);	
 		Xe_SetTexture(xe, 0, NULL);
-	}
-	
+	}	
 	
 	// tmp
 	// Xe_SetFillMode(xe, XE_FILL_WIREFRAME, XE_FILL_WIREFRAME);
@@ -214,7 +211,7 @@ void glArrayElement(GLint i)
 
 void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
 {
-		
+		TR
 }
 
 GLenum glGetError(){

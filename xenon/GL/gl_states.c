@@ -1,17 +1,32 @@
 #include "gl_xenos.h"
 
-static GLenum gl_cull_mode = 0;
+static GLenum gl_cull_mode = GL_BACK;
 static GLboolean gl_cull_enable = GL_FALSE;
-static GLenum gl_front_face = 0;
+static GLenum gl_front_face = GL_CCW;
 
 void glShadeModel (GLenum mode)
 {
 	
 }
 
+/***********************************************************************
+ * Clear
+ ***********************************************************************/
+static int scissor_x, scissor_y, scissor_w, scissor_h;
+
+static int updateScissor(int enabled)
+{
+	Xe_SetScissor(xe, enabled, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
+}
+
 void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
 {
-	Xe_SetScissor(xe, 1, x, y, x+width, y+height);
+	scissor_x = x;
+	scissor_y = y;
+	scissor_w = width;
+	scissor_h = height;
+	
+	Xe_SetScissor(xe, 1, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
 }
 
 
@@ -37,7 +52,7 @@ void glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 
 void glClearDepth(GLclampd depth)
 {
-	
+	Xe_Clear(xe, XE_CLEAR_DS);
 }
 
 /***********************************************************************
@@ -73,8 +88,8 @@ static void updateCullMode()
 			; // do nothing; we cull in software in GL_SubmitVertexes instead
 		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
 	}
-	else xe_gl_error ("GL_UpdateCull: illegal glFrontFace\n");
-	Xe_SetCullMode(xe, gl_cull_mode);
+	else 
+		xe_gl_error ("GL_UpdateCull: illegal glFrontFace\n");
 #else 
 	if (gl_cull_enable == GL_FALSE)
 	{
@@ -200,8 +215,8 @@ void glDepthMask (GLboolean flag)
 
 void glAlphaFunc (GLenum func, GLclampf ref)
 {
-	//Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
-	//Xe_SetAlphaRef(xe, ref * 255);
+	Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
+	Xe_SetAlphaRef(xe, ref * 255);
 }
 void glDepthRange (GLclampd zNear, GLclampd zFar)
 {
@@ -290,9 +305,10 @@ void GlEnableDisable(GLenum cap, int enable)
 {
 	switch (cap)
 	{
-	case GL_SCISSOR_TEST:		
+	case GL_SCISSOR_TEST:
+		updateScissor(enable?1:0);
 		break;
-
+		
 	case GL_BLEND:
 		if (!enable) {
 			Xe_SetSrcBlend(xe, XE_BLEND_ONE);
@@ -305,9 +321,8 @@ void GlEnableDisable(GLenum cap, int enable)
 			Xe_SetBlendOp(xe, old_blend_op);
 		}
 		break;
-
 	case GL_ALPHA_TEST:
-		Xe_SetAlphaTestEnable(xe, enable?0:1);
+		Xe_SetAlphaTestEnable(xe, enable?1:0);
 		break;
 
 	case GL_TEXTURE_2D:
@@ -317,6 +332,8 @@ void GlEnableDisable(GLenum cap, int enable)
 	case GL_CULL_FACE:
 		if (!enable)
 			gl_cull_enable = GL_FALSE;
+		else
+			gl_cull_enable = GL_TRUE;
 		updateCullMode();
 		return;
 
@@ -324,7 +341,7 @@ void GlEnableDisable(GLenum cap, int enable)
 		break;
 
 	case GL_DEPTH_TEST:
-		Xe_SetZEnable(xe, enable);
+		Xe_SetZEnable(xe, enable?1:0);
 		break;
 
 	case GL_POLYGON_OFFSET_FILL:
