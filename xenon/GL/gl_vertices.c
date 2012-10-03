@@ -70,6 +70,9 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 
 void GL_SubmitVertexes()
 {
+	// dbg
+	//Xe_SetFillMode(xe, XE_FILL_WIREFRAME, XE_FILL_WIREFRAME);
+	
 	// update if dirty
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);

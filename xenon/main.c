@@ -49,7 +49,8 @@ void main (int argc, char **argv)
 		"uda:/q3.elf",
 		//"+set", "game", "baseq2", "+set", "cddir", "uda:/baseq2/"
 		"+set", "basedir" , "uda:/",
-		"+set", "cddir", "uda:/baseq2/"
+		"+set", "cddir", "uda:/baseq2/",
+		"+set", "cl_maxfps", "400"
 	};
 	int newargc = sizeof (newargv) / sizeof (char *);
 	

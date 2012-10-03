@@ -210,21 +210,13 @@ void glDepthFunc (GLenum func)
 
 void glDepthMask (GLboolean flag)
 {
-	Xe_SetZEnable(xe, flag == GL_TRUE ? 1 : 0);
+	Xe_SetZWrite(xe, flag == GL_TRUE ? 1 : 0);
 }
 
 void glAlphaFunc (GLenum func, GLclampf ref)
 {
 	Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
 	Xe_SetAlphaRef(xe, ref * 255);
-}
-void glDepthRange (GLclampd zNear, GLclampd zFar)
-{
-	//xe_gl_log("glDepthRange Not implemented\n");
-}
-void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
-{
-	//xe_gl_log("glViewport Not implemented\n");
 }
 
 /***********************************************************************

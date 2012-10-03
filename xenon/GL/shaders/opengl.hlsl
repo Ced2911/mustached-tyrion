@@ -28,16 +28,18 @@ VertexShaderOutput vs_main(VertexShaderInput input)
     //output.Position = mul(input.Position, MVP);//mul(MVP, input.Position);
 	//output.Position = input.Position;
 	
-	output.Position = mul(MVP, input.Position);
+	output.Position = mul(MVP, input.Position); // OGL
+	// output.Position = mul(input.Position, MVP); // DX
 	output.uv0 = input.uv0;
 	output.uv1 = input.uv1;
 	output.color = input.color;
 	
 	// reverse Z
 	/*
-	output.Position.z= 1 - output.Position.z;
+	output.Position.z = 1 - output.Position.z;
 	output.Position.w = 1;
 	*/
+	output.Position.w = 1;
     return output;
 }
 
