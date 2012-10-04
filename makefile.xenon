@@ -65,14 +65,14 @@ build_debug:
 		$(BUILD_DEBUG_DIR)/client \
 		$(BUILD_DEBUG_DIR)/game \
 		$(BUILD_DEBUG_DIR)/ref_soft $(BUILD_DEBUG_DIR)/ref_gl
-	$(MAKE) -f makefile.xenon targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS)"
+	$(MAKE) -f makefile.xenon targets BUILDDIR=$(BUILD_DEBUG_DIR) CFLAGS="$(DEBUG_CFLAGS) -DUSE_SOFT"
 
 build_release:
 	@-mkdir $(BUILD_RELEASE_DIR) \
 		$(BUILD_RELEASE_DIR)/client \
 		$(BUILD_RELEASE_DIR)/game \
 		$(BUILD_RELEASE_DIR)/ref_soft  $(BUILD_RELEASE_DIR)/ref_gl
-	$(MAKE) -f makefile.xenon targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS)"
+	$(MAKE) -f makefile.xenon targets BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS) -DUSE_SOFT"
 
 all: build_debug
 
@@ -140,7 +140,6 @@ QUAKE2_OBJS = \
 	$(BUILDDIR)/client/pmove.o \
 	\
 	$(BUILDDIR)/client/cd_null.o \
-	$(BUILDDIR)/client/video.o \
 	\
 	$(BUILDDIR)/game/g_ai.o \
 	$(BUILDDIR)/game/p_client.o \
@@ -193,7 +192,8 @@ QUAKE2_OBJS = \
 	\
 	$(BUILDDIR)/client/xenon_main.o \
 	$(BUILDDIR)/client/input.o \
-	$(BUILDDIR)/client/snddma_xenon.o 
+	$(BUILDDIR)/client/snddma_xenon.o \
+	$(BUILDDIR)/client/my_setjmp.o
 
 QUAKE2_SOFT = \
 	$(BUILDDIR)/ref_soft/r_aclip.o \
@@ -213,7 +213,8 @@ QUAKE2_SOFT = \
 	$(BUILDDIR)/ref_soft/r_scan.o \
 	$(BUILDDIR)/ref_soft/r_sprite.o \
 	$(BUILDDIR)/ref_soft/r_surf.o \
-	$(BUILDDIR)/client/swimp_xenon.o
+	$(BUILDDIR)/client/swimp_xenon.o \
+	$(BUILDDIR)/client/video_soft.o
 
 QUAKE2_GL = \
 	$(BUILDDIR)/ref_gl/gl_draw.o \
@@ -226,7 +227,8 @@ QUAKE2_GL = \
 	$(BUILDDIR)/ref_gl/gl_rsurf.o \
 	$(BUILDDIR)/ref_gl/gl_warp.o \
 	$(BUILDDIR)/client/glimp_xenon.o \
-	$(BUILDDIR)/client/qgl.o
+	$(BUILDDIR)/client/qgl.o \
+	$(BUILDDIR)/client/video_gl.o
 
 $(BUILDDIR)/quake2_xenon : $(QUAKE2_OBJS) $(QUAKE2_SOFT)
 	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_SOFT) $(LDFLAGS)
@@ -398,7 +400,12 @@ $(BUILDDIR)/client/glimp_xenon.o     : $(XENON_DIR)/glimp.c
 	$(DO_CC)
 $(BUILDDIR)/client/qgl.o     : $(XENON_DIR)/qgl.c
 	$(DO_CC)
-	
+$(BUILDDIR)/client/my_setjmp.o     : $(XENON_DIR)/my_setjmp.c
+	$(DO_CC)
+$(BUILDDIR)/client/video_gl.o :   $(XENON_DIR)/video_gl.c
+	$(DO_CC)
+$(BUILDDIR)/client/video_soft.o :   $(XENON_DIR)/video_soft.c
+	$(DO_CC)
 #############################################################################
 # GAME
 #############################################################################

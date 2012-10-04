@@ -14,7 +14,7 @@ void glShadeModel (GLenum mode)
  ***********************************************************************/
 static int scissor_x, scissor_y, scissor_w, scissor_h;
 
-static int updateScissor(int enabled)
+static void updateScissor(int enabled)
 {
 	Xe_SetScissor(xe, enabled, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
 }
@@ -43,9 +43,12 @@ void glClear (GLbitfield mask)
 	Xe_Clear(xe, flags);
 }
 
+#define MAKE_COLOR4(r,g,b,a) ((a&0xFF)<<24 | ((b&0xFF)<<16) | ((g&0xFF)<<8) | (r&0xFF))
+
 void glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-	Xe_SetClearColor(xe, Gl_Color_2_Xe (red, green, blue, alpha));
+	unsigned int c = MAKE_COLOR4((int)(red * 255), (int)(green * 255), (int)(blue * 255), (int)(alpha * 255));
+	Xe_SetClearColor(xe, c);
 }
 
 void glClearDepth(GLclampd depth)

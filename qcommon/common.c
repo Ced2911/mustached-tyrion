@@ -191,7 +191,7 @@ void Com_Error (int code, char *fmt, ...)
 		Com_Printf ("********************\nERROR: %s\n********************\n", "ERR_DISCONNECT");
 		CL_Drop ();
 		recursive = false;
-#if 0	
+#if 1	
 		longjmp (abortframe, -1);
 #endif
 	}
@@ -201,7 +201,7 @@ void Com_Error (int code, char *fmt, ...)
 		SV_Shutdown (va("Server crashed: %s\n", msg), false);
 		CL_Drop ();
 		recursive = false;
-#if 0		
+#if 1		
 		longjmp (abortframe, -1);
 #endif		
 	}
@@ -1404,7 +1404,7 @@ void Qcommon_Init (int argc, char **argv)
 {
 	char	*s;
 
-#if 0
+#if 1
 	if (setjmp (abortframe) )
 		Sys_Error ("Error during initialization");
 #endif
@@ -1499,7 +1499,7 @@ void Qcommon_Frame (int msec)
 {
 	char	*s;
 	int		time_before, time_between, time_after;
-#if 0
+#if 1
 	if (setjmp (abortframe) )
 		return;			// an ERR_DROP was thrown
 #endif

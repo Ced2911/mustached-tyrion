@@ -75,7 +75,7 @@ static void ShowFPS() {
 	nowTick = mftb() / (PPC_TIMEBASE_FREQ / 1000);
 	if (lastTick + 1000 <= nowTick) {
 
-		printf("SWimp_EndFrame %d fps\r\n", frames);
+		printf("Gl %d fps\r\n", frames);
 
 		frames = 0;
 		lastTick = nowTick;
@@ -95,7 +95,6 @@ void XenonGLDisplay()
     
     // Reset states
     Xe_InvalidateState(xe);
-    Xe_SetClearColor(xe, 0);
     
     // Reset vertices
     xe_NumVerts = xe_PrevNumVerts = 0;

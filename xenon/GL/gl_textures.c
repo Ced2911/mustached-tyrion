@@ -7,6 +7,56 @@
 
 glXeSurface_t * glXeSurfaces = NULL;
 
+static inline void handle_small_surface_u8(struct XenosSurface * surf, void * buffer)
+{
+	int width;
+	int height;
+	int wpitch;
+	int hpitch;
+	int yp,xp,y,x;
+	uint8_t * surf_data;
+	uint8_t * data;
+	uint8_t * src;	
+
+	// don't handle big texture
+	if( surf->width>128 && surf->height>32 && surf->bypp != 1) {
+		return;
+	}	
+
+	width = surf->width;
+	height = surf->height;
+	wpitch = surf->wpitch;
+	hpitch = surf->hpitch;	
+
+	if(buffer)
+        surf_data = (uint8_t *)buffer;
+    else
+        surf_data = (uint8_t *)Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+
+	src = data = surf_data;
+
+	for(yp=0; yp<hpitch;yp+=height) {
+		int max_h = height;
+		if (yp + height> hpitch)
+				max_h = hpitch % height;
+		for(y = 0; y<max_h; y++){
+			//x order
+			for(xp = 0;xp<wpitch;xp+=width) {
+				int max_w = width;
+				if (xp + width> wpitch)
+					max_w = wpitch % width;
+
+				for(x = 0; x<max_w; x++) {
+					data[x+xp + ((y+yp)*wpitch)]=src[x+ (y*wpitch)];
+				}
+			}
+		}
+	}
+
+    if(!buffer)
+        Xe_Surface_Unlock(xe, surf);
+}
+
 static inline void handle_small_surface(struct XenosSurface * surf, void * buffer){
 	int width;
 	int height;
@@ -18,6 +68,10 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 	uint32_t * src;	
 
 	// don't handle big texture
+	if ( surf->width>128 && surf->height>32 && surf->bypp == 1) {
+		handle_small_surface_u8(surf, buffer);
+	}
+	
 	if( surf->width>128 && surf->height>32 && surf->bypp != 4) {
 		return;
 	}	
@@ -163,10 +217,11 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 	int i;
 	glXeSurface_t *tex;
 
-	for (i = 0; i< XE_MAX_TEXTURE; i++)
-	{
-		tex = &glXeSurfaces[i];
-		for (i = 0; i < n; i++) {
+	for (i = 0; i < n; i++) {
+		for (i = 0; i< XE_MAX_TEXTURE; i++)
+		{
+			tex = &glXeSurfaces[i];
+			
 			if (tex->glnum == textures[i]) {
 				Xe_InitTexture(tex);
 				break;

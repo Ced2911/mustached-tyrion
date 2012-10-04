@@ -1,5 +1,3 @@
-
-
 #include "../ref_gl/gl_local.h"
 
 #include <GL/gl.h>	// Header File For The OpenGL32 Library
@@ -8,7 +6,6 @@
 #include <xenos/xenos.h>
 #include <xenon_soc/xenon_power.h>
 #include <debug.h>
-
 
 
 void GLimp_BeginFrame( float camera_separation )
@@ -22,6 +19,7 @@ void GLimp_EndFrame( void )
 
 int GLimp_Init( void *hinstance, void *hWnd )
 {
+	TR;
 	XenonGLInit();
 	QGL_Init("fake");
 	return true;
@@ -29,14 +27,13 @@ int GLimp_Init( void *hinstance, void *hWnd )
 
 void GLimp_Shutdown( void )
 {
+	TR
 }
 
 int GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen )
 {
 	int width, height;
 	GLint attribs[32];
-
-	fprintf(stderr, "GLimp_SetMode\n");
 
 	ri.Con_Printf( PRINT_ALL, "Initializing OpenGL display\n");
 
@@ -58,7 +55,6 @@ int GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen )
 	
 	// let the sound and input subsystems know about the new window
 	ri.Vid_NewWindow (width, height);
-	printf("%s\n", qglGetString (GL_VENDOR));
 	return rserr_ok;
 }
 

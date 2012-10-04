@@ -33,12 +33,12 @@ void Sys_Quit (void)
 	exit (0);
 }
 
-void	Sys_UnloadGame (void)
+void Sys_UnloadGame (void)
 {
 	TR;
 }
 
-void	*Sys_GetGameAPI (void *parms)
+void *Sys_GetGameAPI (void *parms)
 {
 	return (void*)GetGameAPI(parms);
 }
@@ -48,9 +48,10 @@ char *Sys_ConsoleInput (void)
 	return NULL;
 }
 
-void	Sys_ConsoleOutput (char *string)
+void Sys_ConsoleOutput (char *string)
 {
-	fputs(string, stdout);
+	printf(string);
+	printf("\n");
 }
 
 void Sys_SendKeyEvents (void)
