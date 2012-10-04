@@ -29,8 +29,6 @@ void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
 	Xe_SetScissor(xe, 1, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
 }
 
-
-
 /***********************************************************************
  * Clear
  ***********************************************************************/
@@ -117,51 +115,6 @@ void glCullFace (GLenum mode)
 /***********************************************************************
  * Depth
  ***********************************************************************/
-int Gl_ZCmp_2_Xe(GLenum mode)
-{
-	// xenos use reverse Z cmp
-	int cmp = 0;
-	switch (mode)
-	{
-	case GL_NEVER:
-		cmp = XE_CMP_NEVER;
-		break;
-
-	case GL_LESS:
-		// cmp = XE_CMP_LESS;
-		cmp = XE_CMP_GREATER;
-		break;
-
-	case GL_LEQUAL:
-		//cmp = XE_CMP_LESSEQUAL;
-		cmp = XE_CMP_GREATEREQUAL;
-		break;
-
-	case GL_EQUAL:
-		cmp = XE_CMP_EQUAL;
-		break;
-
-	case GL_GREATER:
-		// cmp = XE_CMP_GREATER;
-		cmp = XE_CMP_LESS;
-		break;
-
-	case GL_NOTEQUAL:
-		cmp = XE_CMP_NOTEQUAL;
-		break;
-
-	case GL_GEQUAL:
-		//cmp = XE_CMP_GREATEREQUAL;
-		cmp = XE_CMP_LESSEQUAL;
-		break;
-
-	case GL_ALWAYS:
-	default:
-		cmp = XE_CMP_ALWAYS;
-		break;
-	}
-}
- 
 int Gl_Cmp_2_Xe(GLenum mode)
 {
 	int cmp = 0;
@@ -200,11 +153,13 @@ int Gl_Cmp_2_Xe(GLenum mode)
 		cmp = XE_CMP_ALWAYS;
 		break;
 	}
+	return cmp;
 } 
+
+
  
 void glDepthFunc (GLenum func)
 {
-	// use reverse Z
 	Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
 }
 
@@ -215,8 +170,13 @@ void glDepthMask (GLboolean flag)
 
 void glAlphaFunc (GLenum func, GLclampf ref)
 {
-	Xe_SetAlphaFunc(xe, Gl_Cmp_2_Xe(func));
-	Xe_SetAlphaRef(xe, ref * 255);
+	int cmp = Gl_Cmp_2_Xe(func);
+	if (cmp == XE_CMP_GREATEREQUAL) {
+		ref -= 1.f/255.f;
+		cmp = XE_CMP_GREATER;
+	}
+	Xe_SetAlphaFunc(xe, cmp);
+	Xe_SetAlphaRef(xe, ref);
 }
 
 /***********************************************************************
@@ -281,14 +241,22 @@ void glAlphaFunc (GLenum func, GLclampf ref)
 static int old_src_blend = XE_BLEND_ONE;
 static int old_dst_blend = XE_BLEND_ZERO;
 static int old_blend_op = XE_BLENDOP_ADD;
+static int blend_enabled = 0;
 
-void glBlendFunc (GLenum sfactor, GLenum dfactor)
+static void updateBlend()
+{
+	if (blend_enabled) {
+		Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
+	} else {
+		Xe_SetBlendControl(xe, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO);
+	}
+}
+
+void glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
 	old_src_blend = Gl_Blend_2_Xe(sfactor);
 	old_dst_blend = Gl_Blend_2_Xe(dfactor);
-	
-	Xe_SetSrcBlend(xe, old_src_blend);
-	Xe_SetDestBlend(xe, old_dst_blend);
+	updateBlend();
 }
 /***********************************************************************
  * Blend
@@ -298,23 +266,15 @@ void GlEnableDisable(GLenum cap, int enable)
 	switch (cap)
 	{
 	case GL_SCISSOR_TEST:
-		updateScissor(enable?1:0);
+		updateScissor(enable);
 		break;
 		
 	case GL_BLEND:
-		if (!enable) {
-			Xe_SetSrcBlend(xe, XE_BLEND_ONE);
-			Xe_SetDestBlend(xe, XE_BLEND_ZERO);
-			Xe_SetBlendOp(xe, XE_BLENDOP_ADD);
-		}
-		else {
-			Xe_SetSrcBlend(xe, old_src_blend);
-			Xe_SetDestBlend(xe, old_dst_blend);
-			Xe_SetBlendOp(xe, old_blend_op);
-		}
+		blend_enabled = enable;
+		updateBlend();
 		break;
 	case GL_ALPHA_TEST:
-		Xe_SetAlphaTestEnable(xe, enable?1:0);
+		Xe_SetAlphaTestEnable(xe, enable);
 		break;
 
 	case GL_TEXTURE_2D:
@@ -333,7 +293,7 @@ void GlEnableDisable(GLenum cap, int enable)
 		break;
 
 	case GL_DEPTH_TEST:
-		Xe_SetZEnable(xe, enable?1:0);
+		Xe_SetZEnable(xe, enable);
 		break;
 
 	case GL_POLYGON_OFFSET_FILL:

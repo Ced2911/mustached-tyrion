@@ -18,7 +18,7 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 	uint32_t * src;	
 
 	// don't handle big texture
-	if( surf->width>128 && surf->height>32) {
+	if( surf->width>128 && surf->height>32 && surf->bypp != 4) {
 		return;
 	}	
 
@@ -287,26 +287,40 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 
 			dstdata = surfbuf + offset;
 			for (x = xoffset; x < (xoffset + width); x++) {
-				if (srcbytes == 4 && dstbytes == 4) {
-					dstdata[0] = srcdata[3];
-					dstdata[3] = srcdata[2];
-					dstdata[2] = srcdata[1];
-					dstdata[1] = srcdata[0];
-
+				if (srcbytes == 4) {
+					if (dstbytes == 4) {
+						dstdata[0] = srcdata[3];
+						dstdata[3] = srcdata[2];
+						dstdata[2] = srcdata[1];
+						dstdata[1] = srcdata[0];
+					} else if(dstbytes == 1) {
+						dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+					}
+						
 					srcdata += srcbytes;
 					dstdata += dstbytes;
-				}
-				if (srcbytes == 3 && dstbytes == 4) {
-					dstdata[0] = 0xff;
-					dstdata[3] = srcdata[2];
-					dstdata[2] = srcdata[1];
-					dstdata[1] = srcdata[0];
-
+					
+				} else if (srcbytes == 3) {
+					if (dstbytes == 4) {					
+						dstdata[0] = 0xff;
+						dstdata[3] = srcdata[2];
+						dstdata[2] = srcdata[1];
+						dstdata[1] = srcdata[0];
+					} else if (dstbytes == 1) {
+						dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+					}
+						
 					srcdata += srcbytes;
 					dstdata += dstbytes;
-				}
-				if (srcbytes == 1 && dstbytes == 1) {				
-					dstdata[0] = srcdata[0];				
+				} else if (srcbytes == 1) {
+					if (dstbytes == 1) {
+						dstdata[0] = srcdata[0];
+					} else if (dstbytes == 4) {
+						dstdata[0] = srcdata[0];
+						dstdata[1] = srcdata[0];
+						dstdata[2] = srcdata[0];
+						dstdata[3] = srcdata[0];
+					}
 					srcdata += srcbytes;
 					dstdata += dstbytes;
 				}
@@ -389,29 +403,40 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 	for (y = 0; y <height; y++) {
 		dstdata = surfbuf + (y * (width * dstbytes));
 		for (x = 0; x < width; x++) {
-			if (srcbytes == 4 && dstbytes == 4) {
-				
-				dstdata[0] = srcdata[3];
-				dstdata[3] = srcdata[2];
-				dstdata[2] = srcdata[1];
-				dstdata[1] = srcdata[0];
-				
+			if (srcbytes == 4) {
+				if (dstbytes == 4) {
+					dstdata[0] = srcdata[3];
+					dstdata[3] = srcdata[2];
+					dstdata[2] = srcdata[1];
+					dstdata[1] = srcdata[0];
+				} else if(dstbytes == 1) {
+					dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+				}
+					
 				srcdata += srcbytes;
 				dstdata += dstbytes;
-			}
-			if (srcbytes == 3 && dstbytes == 4) {
 				
-				dstdata[0] = 0xff;
-				dstdata[3] = srcdata[2];
-				dstdata[2] = srcdata[1];
-				dstdata[1] = srcdata[0];
-				
+			} else if (srcbytes == 3) {
+				if (dstbytes == 4) {		
+					dstdata[0] = 0xff;
+					dstdata[3] = srcdata[2];
+					dstdata[2] = srcdata[1];
+					dstdata[1] = srcdata[0];
+				} else if (dstbytes == 1) {
+					dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+				}
+					
 				srcdata += srcbytes;
 				dstdata += dstbytes;
-			}
-			if (srcbytes == 1 && dstbytes == 1) {
-				
-				dstdata[0] = srcdata[0];				
+			} else if (srcbytes == 1) {
+				if (dstbytes == 1) {
+					dstdata[0] = srcdata[0];
+				} else if (dstbytes == 4) {
+					dstdata[0] = srcdata[0];
+					dstdata[1] = srcdata[0];
+					dstdata[2] = srcdata[0];
+					dstdata[3] = srcdata[0];
+				}
 				srcdata += srcbytes;
 				dstdata += dstbytes;
 			}

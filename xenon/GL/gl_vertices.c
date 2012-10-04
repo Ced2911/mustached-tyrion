@@ -69,10 +69,7 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 }
 
 void GL_SubmitVertexes()
-{
-	// dbg
-	//Xe_SetFillMode(xe, XE_FILL_WIREFRAME, XE_FILL_WIREFRAME);
-	
+{	
 	// update if dirty
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
@@ -94,10 +91,7 @@ void GL_SubmitVertexes()
 	else {
 		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelColorShader, 0);	
 		Xe_SetTexture(xe, 0, NULL);
-	}	
-	
-	// tmp
-	// Xe_SetFillMode(xe, XE_FILL_WIREFRAME, XE_FILL_WIREFRAME);
+	}
 	
 	// draw
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));

@@ -46,8 +46,8 @@ void XenonGLInit(){
 	Xe_ShaderApplyVFetchPatches(xe, pVertexShader, 0, &vbf);
 	
 	// Create vb
-	pVbGL = Xe_CreateVertexBuffer(xe, XE_MAX_VERTICES);
-	xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, XE_MAX_VERTICES, XE_LOCK_WRITE);
+	pVbGL = Xe_CreateVertexBuffer(xe, XE_MAX_VERTICES * sizeof(glVerticesFormat_t));
+	xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, XE_MAX_VERTICES * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);
 	
 	// init matrices
@@ -85,7 +85,7 @@ static void ShowFPS() {
 void XenonGLDisplay()
 {    
     // update vb cache !!!
-    Xe_VB_Lock(xe, pVbGL, 0, XE_MAX_VERTICES, XE_LOCK_WRITE);
+    Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);    
     
     // Resolve
