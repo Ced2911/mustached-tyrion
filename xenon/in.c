@@ -1,13 +1,13 @@
 // in_null.c -- for systems without a mouse
 #include <input/input.h>
 #include <usb/usbmain.h>
-
+#include <debug.h>
 #include "../client/client.h"
 
-#define SIDE_THRESHOLD	4096
-#define LOOK_THRESHOLD	4096
-#define LOOK_VALUE	1
-#define SIDE_VALUE	1
+#define SIDE_THRESHOLD	0.125f
+#define LOOK_THRESHOLD	0.125f
+#define LOOK_VALUE	50
+#define SIDE_VALUE	9
 
 static struct controller_data_s ctrl, old_ctrl;
 
@@ -54,53 +54,59 @@ void IN_Move (usercmd_t *cmd)
 	f2_x = (float)ctrl.s2_x / 32768.0f;
 	f2_y = (float)ctrl.s2_y / 32768.0f;
 	
-	if (ctrl.a && !old_ctrl.a) {
-		Key_Event(K_MOUSE1,1,0);
+	if (ctrl.rt > 64) {
+		Key_Event(K_MOUSE1, 1, 0);
 	}
-	else if (!ctrl.a && old_ctrl.a) {
-		Key_Event(K_MOUSE1,0,0);
+	else if (ctrl.rt < 64) {
+		Key_Event(K_MOUSE1, 0, 0);
 	}
 	
 	if (ctrl.start && !old_ctrl.start) {
-		Key_Event(K_ENTER,1,0);
+		Key_Event(K_ENTER, 1, 0);
 	}
 	else if (!ctrl.start && old_ctrl.start) {
-		Key_Event(K_ENTER,0,0);
+		Key_Event(K_ENTER, 0, 0);
+	}	
+	
+	if (ctrl.back && !old_ctrl.back) {
+		Key_Event(K_ESCAPE, 1, 0);
+	}
+	else if (!ctrl.back && old_ctrl.back) {
+		Key_Event(K_ESCAPE, 0, 0);
 	}
 	
 	if (ctrl.up && !old_ctrl.up) {
-		Key_Event(K_UPARROW,1,0);
+		Key_Event(K_UPARROW, 1, 0);
 	}
 	else if (!ctrl.up && old_ctrl.up) {
-		Key_Event(K_UPARROW,0,0);
+		Key_Event(K_UPARROW, 0, 0);
 	}
 	
 	if (ctrl.down && !old_ctrl.down) {
-		Key_Event(K_DOWNARROW,1,0);
+		Key_Event(K_DOWNARROW, 1, 0);
 	}
 	else if (!ctrl.down && old_ctrl.down) {
-		Key_Event(K_DOWNARROW,0,0);
+		Key_Event(K_DOWNARROW, 0, 0);
 	}
-	
-	
+		
 	// AxisSide
-	if (fabs(f2_x) > SIDE_THRESHOLD)
+	if (fabs(f1_x) > SIDE_THRESHOLD)
 	{
-		cmd->sidemove += (f2_x * SIDE_VALUE) * speed * cl_sidespeed->value;
+		cmd->sidemove += (f1_x * SIDE_VALUE) * speed * cl_sidespeed->value;
 	}
 	// AxisUp
-	if (fabs(f2_y) > SIDE_THRESHOLD)
+	if (fabs(f1_y) > SIDE_THRESHOLD)
 	{
-		cmd->upmove += (f2_y * SIDE_VALUE) * speed * cl_sidespeed->value;
+		cmd->forwardmove += (f1_y * SIDE_VALUE) * speed * cl_forwardspeed->value;
 	}
 	// Look 
-	if (fabs(f1_x) > LOOK_THRESHOLD)
+	if (fabs(f2_x) > LOOK_THRESHOLD)
 	{
-		cl.viewangles[YAW] += (f1_x * LOOK_VALUE) * m_yaw->value;
+		cl.viewangles[YAW] -= (f2_x * LOOK_VALUE) * m_yaw->value;
 	}
-	if (fabs(f1_y) > LOOK_THRESHOLD)
+	if (fabs(f2_y) > LOOK_THRESHOLD)
 	{
-		cl.viewangles[PITCH] += (f1_y * LOOK_VALUE) * m_pitch->value;
+		cl.viewangles[PITCH] -= (f2_y * LOOK_VALUE) * m_pitch->value;
 	}
 #if 0
 	// loop through the axes
