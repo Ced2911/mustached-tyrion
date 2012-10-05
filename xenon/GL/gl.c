@@ -82,8 +82,9 @@ static void ShowFPS() {
 	}
 }
 
+// classic way
 void XenonGLDisplay()
-{    
+{    	
     // update vb cache !!!
     Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);    
@@ -91,12 +92,38 @@ void XenonGLDisplay()
     // Resolve
     Xe_Resolve(xe);
     //while(!Xe_IsVBlank(xe));
+    
     Xe_Sync(xe);
     
     // Reset states
     Xe_InvalidateState(xe);
     
     // Reset vertices
+    xe_NumVerts = xe_PrevNumVerts = 0;
+ 
+	ShowFPS();
+}
+
+void XenonBeginGl()
+{
+	// Reset states
+    Xe_InvalidateState(xe);
+    
+    Xe_Sync(xe);
+}
+
+void XenonEndGl()
+{
+	// update vb cache !!!
+    Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
+	Xe_VB_Unlock(xe, pVbGL);
+	
+	// Resolve
+    Xe_Resolve(xe);
+    
+	Xe_Execute(xe);
+	
+	// Reset vertices
     xe_NumVerts = xe_PrevNumVerts = 0;
  
 	ShowFPS();

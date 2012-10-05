@@ -117,4 +117,6 @@ void xe_gl_error(const char * format, ...);
 void xe_gl_log(const char * format, ...);
 void XenonGLInit();
 void XenonGLDisplay();
+void XenonBeginGl();
+void XenonEndGl();
 void XeGLInitTextures();

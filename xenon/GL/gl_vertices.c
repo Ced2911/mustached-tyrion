@@ -35,6 +35,7 @@ int Gl_Prim_2_Xe_Prim(GLenum mode)
 			break;
 		case GL_LINES:
 			ret = XE_PRIMTYPE_LINELIST;
+		case GL_QUAD_STRIP:
 		case GL_QUADS:
 			ret = XE_PRIMTYPE_QUADLIST;
 			break;
@@ -60,6 +61,7 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 		case GL_POINTS:
 		case GL_LINES:
 			ret = size;
+		case GL_QUAD_STRIP:
 		case GL_QUADS:
 			ret = size/4;
 			break;
@@ -67,9 +69,12 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 	
 	return ret;
 }
-
+extern GLenum gl_cull_mode;
 void GL_SubmitVertexes()
 {	
+	
+	//if (gl_cull_mode != GL_FRONT_AND_BACK)
+	//	return;
 	// update if dirty
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
@@ -94,6 +99,7 @@ void GL_SubmitVertexes()
 	}
 	
 	// draw
+	// if (!(xe_PrimitiveMode == GL_QUADS || xe_PrimitiveMode == GL_QUAD_STRIP))
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
 }
 
@@ -106,27 +112,6 @@ void glBegin(GLenum mode)
 
 void glEnd()
 {
-	switch (xe_PrimitiveMode) {
-		case GL_TRIANGLE_FAN:
-		case GL_TRIANGLES:
-		{
-			
-			break;
-		}
-		case GL_TRIANGLE_STRIP:
-		{
-			
-			break;
-		}
-		case GL_POINTS:
-		case GL_LINES:
-		case GL_POLYGON:
-		case GL_QUADS:
-		{
-			break;
-		}
-	}
-
 	// submit vertices
 	GL_SubmitVertexes();
 };
@@ -203,12 +188,12 @@ void glFinish (void)
 }
 void glArrayElement(GLint i)
 {
-	
+	TR
 }
 
 void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
 {
-		TR
+	TR
 }
 
 GLenum glGetError(){

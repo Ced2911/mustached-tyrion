@@ -1,8 +1,8 @@
 #include "gl_xenos.h"
 
-static GLenum gl_cull_mode = GL_BACK;
+GLenum gl_cull_mode = GL_BACK;
 static GLboolean gl_cull_enable = GL_FALSE;
-static GLenum gl_front_face = GL_CCW;
+GLenum gl_front_face = GL_CCW;
 
 void glShadeModel (GLenum mode)
 {
@@ -248,15 +248,22 @@ static int blend_enabled = 0;
 
 static void updateBlend()
 {
+	#if 0
 	if (blend_enabled) {
 		Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
 	} else {
 		Xe_SetBlendControl(xe, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO);
 	}
+	//Xe_SetBlendControl(xe, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA); 
+	
+	//printf("blend_enabled : %d, src : %d, dst : %d\n",blend_enabled,old_src_blend,old_dst_blend);
+	#endif
+	Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
 }
 
 void glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
+	//printf("glBlendFunc src : %x, dst : %x\n",sfactor,dfactor);
 	old_src_blend = Gl_Blend_2_Xe(sfactor);
 	old_dst_blend = Gl_Blend_2_Xe(dfactor);
 	updateBlend();
@@ -276,6 +283,7 @@ void GlEnableDisable(GLenum cap, int enable)
 		blend_enabled = enable;
 		updateBlend();
 		break;
+		
 	case GL_ALPHA_TEST:
 		Xe_SetAlphaTestEnable(xe, enable);
 		break;
@@ -291,18 +299,14 @@ void GlEnableDisable(GLenum cap, int enable)
 			gl_cull_enable = GL_TRUE;
 		updateCullMode();
 		return;
-
-	case GL_FOG:
-		break;
-
+		
 	case GL_DEPTH_TEST:
 		Xe_SetZEnable(xe, enable);
-		break;
-
+		return;
+		
+	case GL_FOG:
 	case GL_POLYGON_OFFSET_FILL:
 	case GL_POLYGON_OFFSET_LINE:
-		return;
-
 	default:
 		return;
 	}

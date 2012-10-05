@@ -4,10 +4,10 @@
 #include <debug.h>
 #include "../client/client.h"
 
-#define SIDE_THRESHOLD	0.125f
-#define LOOK_THRESHOLD	0.125f
-#define LOOK_VALUE	50
-#define SIDE_VALUE	9
+#define SIDE_THRESHOLD	0.22f
+#define LOOK_THRESHOLD	0.22f
+#define LOOK_VALUE	35
+#define SIDE_VALUE	7
 
 static struct controller_data_s ctrl, old_ctrl;
 
@@ -20,6 +20,7 @@ void IN_Init (void)
 
 void IN_Shutdown (void)
 {
+
 }
 
 void IN_Commands (void)
@@ -214,7 +215,6 @@ void IN_Move (usercmd_t *cmd)
 		}
 	}
 #endif
-
 
 	old_ctrl = ctrl;
 }

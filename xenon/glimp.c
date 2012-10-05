@@ -10,11 +10,12 @@
 
 void GLimp_BeginFrame( float camera_separation )
 {
+	XenonBeginGl();
 }
 
 void GLimp_EndFrame( void )
 {
-	XenonGLDisplay();
+	XenonEndGl();
 }
 
 int GLimp_Init( void *hinstance, void *hWnd )
