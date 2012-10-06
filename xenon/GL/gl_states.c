@@ -4,6 +4,14 @@ GLenum gl_cull_mode = GL_BACK;
 static GLboolean gl_cull_enable = GL_FALSE;
 GLenum gl_front_face = GL_CCW;
 
+// Missing from libxenon
+#define XE_NONE_FRONTFACE_CCW  0x0
+#define XE_FRONT_FRONTFACE_CCW 0x1
+#define XE_BACK_FRONTFACE_CCW  0x2
+#define XE_NONE_FRONTFACE_CW   0x4
+#define XE_FRONT_FRONTFACE_CW  0x5
+#define XE_BACK_FRONTFACE_CW   0x6
+
 void glShadeModel (GLenum mode)
 {
 	
@@ -16,7 +24,7 @@ static int scissor_x, scissor_y, scissor_w, scissor_h;
 
 static void updateScissor(int enabled)
 {
-	Xe_SetScissor(xe, enabled, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
+	//Xe_SetScissor(xe, enabled, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
 }
 
 void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
@@ -26,7 +34,7 @@ void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
 	scissor_w = width;
 	scissor_h = height;
 	
-	Xe_SetScissor(xe, 1, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
+	//Xe_SetScissor(xe, 1, scissor_x, scissor_y, scissor_x+scissor_w, scissor_y+scissor_h);
 }
 
 /***********************************************************************
@@ -68,25 +76,26 @@ static void updateCullMode()
 		Xe_SetCullMode(xe, XE_CULL_NONE);
 		return;
 	}
+	
+	if (gl_cull_mode == GL_FRONT_AND_BACK) {
+		printf("GL_FRONT_AND_BACK: not implemented \n");
+		return;
+	}
 
 	if (gl_front_face == GL_CCW)
 	{
 		if (gl_cull_mode == GL_BACK)
-			Xe_SetCullMode(xe, XE_CULL_CW);
+			Xe_SetCullMode(xe, XE_BACK_FRONTFACE_CCW);
 		else if (gl_cull_mode == GL_FRONT)
-			Xe_SetCullMode(xe, XE_CULL_CCW);
-		else if (gl_cull_mode == GL_FRONT_AND_BACK)
-			; // do nothing; we cull in software in GL_SubmitVertexes instead
+			Xe_SetCullMode(xe, XE_FRONT_FRONTFACE_CCW);
 		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
 	}
 	else if (gl_front_face == GL_CW)
 	{
 		if (gl_cull_mode == GL_BACK)
-			Xe_SetCullMode(xe, XE_CULL_CCW);
+			Xe_SetCullMode(xe, XE_BACK_FRONTFACE_CW);
 		else if (gl_cull_mode == GL_FRONT)
-			Xe_SetCullMode(xe, XE_CULL_CW);
-		else if (gl_cull_mode == GL_FRONT_AND_BACK)
-			; // do nothing; we cull in software in GL_SubmitVertexes instead
+			Xe_SetCullMode(xe, XE_FRONT_FRONTFACE_CW);
 		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
 	}
 	else 
@@ -158,12 +167,51 @@ int Gl_Cmp_2_Xe(GLenum mode)
 	}
 	return cmp;
 } 
+int Gl_ZCmp_2_Xe(GLenum mode)
+{
+	int cmp = 0;
+	switch (mode)
+	{
+	case GL_NEVER:
+		cmp = XE_CMP_NEVER;
+		break;
 
+	case GL_LESS:
+		cmp = XE_CMP_GREATER;
+		break;
 
- 
+	case GL_LEQUAL:
+		cmp = XE_CMP_GREATEREQUAL;
+		break;
+
+	case GL_EQUAL:
+		cmp = XE_CMP_EQUAL;
+		break;
+
+	case GL_GREATER:
+		cmp = XE_CMP_LESS;
+		break;
+
+	case GL_NOTEQUAL:
+		cmp = XE_CMP_NOTEQUAL;
+		break;
+
+	case GL_GEQUAL:
+		cmp = XE_CMP_LESSEQUAL;
+		break;
+
+	case GL_ALWAYS:
+	default:
+		cmp = XE_CMP_ALWAYS;
+		break;
+	}
+	return cmp;
+} 
+
 void glDepthFunc (GLenum func)
 {
 	Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
+	//Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
 }
 
 void glDepthMask (GLboolean flag)
@@ -185,7 +233,7 @@ void glAlphaFunc (GLenum func, GLclampf ref)
 /***********************************************************************
  * Blend
  ***********************************************************************/
- int Gl_Blend_2_Xe(GLenum factor)
+int Gl_Blend_2_Xe(GLenum factor)
 {
 	int blend = XE_BLEND_ONE;
 
@@ -248,17 +296,19 @@ static int blend_enabled = 0;
 
 static void updateBlend()
 {
-	#if 0
+	#if 1
 	if (blend_enabled) {
 		Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
 	} else {
 		Xe_SetBlendControl(xe, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO);
 	}
-	//Xe_SetBlendControl(xe, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA); 
 	
 	//printf("blend_enabled : %d, src : %d, dst : %d\n",blend_enabled,old_src_blend,old_dst_blend);
+	#else
+	// Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
+		
+	Xe_SetBlendControl(xe, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA); 
 	#endif
-	Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
 }
 
 void glBlendFunc(GLenum sfactor, GLenum dfactor)
@@ -348,3 +398,4 @@ void glPolygonMode (GLenum face, GLenum mode)
 	
 	Xe_SetFillMode(xe, fill_front, fill_back);
 }
+

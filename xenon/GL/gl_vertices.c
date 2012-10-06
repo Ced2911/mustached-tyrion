@@ -12,9 +12,6 @@
 #define XE_PRIMTYPE_QUADLIST 13
 */
 
-static short indices_strip[] = {0, 1, 2, 2, 1, 3};
-static short indices_quad[] = {0, 1, 2, 0, 2, 3};
-
 int Gl_Prim_2_Xe_Prim(GLenum mode)
 {
 	// default to this
@@ -35,9 +32,13 @@ int Gl_Prim_2_Xe_Prim(GLenum mode)
 			break;
 		case GL_LINES:
 			ret = XE_PRIMTYPE_LINELIST;
+			break;
 		case GL_QUAD_STRIP:
 		case GL_QUADS:
 			ret = XE_PRIMTYPE_QUADLIST;
+			break;
+		default:
+			xe_gl_error("Unknow prim : %x\n", mode);
 			break;
 	}
 	
@@ -61,6 +62,7 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 		case GL_POINTS:
 		case GL_LINES:
 			ret = size;
+			break;
 		case GL_QUAD_STRIP:
 		case GL_QUADS:
 			ret = size/4;
@@ -79,7 +81,7 @@ void GL_SubmitVertexes()
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
 	
-    Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);    
+    Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);
     Xe_SetShader(xe, SHADER_TYPE_VERTEX, pVertexShader, 0);
     
     // set texture
@@ -97,7 +99,6 @@ void GL_SubmitVertexes()
 		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelColorShader, 0);	
 		Xe_SetTexture(xe, 0, NULL);
 	}
-	
 	// draw
 	// if (!(xe_PrimitiveMode == GL_QUADS || xe_PrimitiveMode == GL_QUAD_STRIP))
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
@@ -121,6 +122,7 @@ void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
 {
 	// add a new vertex to the list with the specified xyz and inheriting the current normal, color and texcoords
 	// (per spec at http://www.opengl.org/sdk/docs/man/xhtml/glVertex.xml)
+#if 0	
 	xe_Vertices[xe_NumVerts].x = x;
 	xe_Vertices[xe_NumVerts].y = y;
 	xe_Vertices[xe_NumVerts].z = z;
@@ -131,8 +133,28 @@ void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
 	xe_Vertices[xe_NumVerts].u0 = xe_TextCoord[0].u;
 	xe_Vertices[xe_NumVerts].v0 = xe_TextCoord[0].v;
 	xe_Vertices[xe_NumVerts].u1 = xe_TextCoord[1].u;
-	xe_Vertices[xe_NumVerts].v1 = xe_TextCoord[1].v;
+	xe_Vertices[xe_NumVerts].v1 = xe_TextCoord[1].v;	
+#else 
+	union {
+		float f;
+		unsigned int u32;
+	} c;
+	
+	c.u32 = xe_CurrentColor.u32;
+	//c.u32 = 0xFFFFFFFF;
+	
+	*xe_Vertices++ = x;
+	*xe_Vertices++ = y;
+	*xe_Vertices++ = z;
+	*xe_Vertices++ = 1;
 
+	*xe_Vertices++ = xe_TextCoord[0].u;
+	*xe_Vertices++ = xe_TextCoord[0].v;
+	*xe_Vertices++ = xe_TextCoord[1].u;
+	*xe_Vertices++ = xe_TextCoord[1].v;
+
+	*xe_Vertices++ = c.f;
+#endif	
 	// next vertex
 	xe_NumVerts++;
 }
@@ -169,12 +191,12 @@ void glTexCoord2fv (const GLfloat *v)
 
 void glEnableClientState(GLenum array)
 {
-	
+	TR
 }
 
 void glPointSize(GLfloat size)
 {
-	
+	TR
 }
 
 void glDrawBuffer (GLenum mode)

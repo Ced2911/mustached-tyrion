@@ -25,6 +25,7 @@ void IN_Shutdown (void)
 
 void IN_Commands (void)
 {
+	
 }
 
 void IN_Frame (void)
@@ -230,4 +231,3 @@ void IN_ActivateMouse (void)
 void IN_DeactivateMouse (void)
 {
 }
-

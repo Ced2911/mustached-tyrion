@@ -1,7 +1,6 @@
 /** Transformation **/
 float4x4 modelview_matrix : register (c0);
 float4x4 projection_matrix : register (c8);
-float4x4 viewport_matrix : register (c16);
 
 struct VertexShaderInput
 {
@@ -24,22 +23,17 @@ VertexShaderOutput vs_main(VertexShaderInput input)
 {
     VertexShaderOutput output;
     // gl_Position = projection_matrix * modelview_matrix * vec4(vertex, 1.0);
-	float4x4 MVP = mul(projection_matrix, modelview_matrix);
     //output.Position = mul(input.Position, MVP);//mul(MVP, input.Position);
 	//output.Position = input.Position;
 	
-	output.Position = mul(MVP, input.Position); // OGL
-	// output.Position = mul(input.Position, MVP); // DX
+	output.Position = mul(mul(projection_matrix, modelview_matrix), input.Position); // OGL
+	//output.Position = mul(input.Position, mul(projection_matrix, modelview_matrix)); // DX
 	output.uv0 = input.uv0;
 	output.uv1 = input.uv1;
 	output.color = input.color;
 	
 	// reverse Z
-	/*
-	output.Position.z = 1 - output.Position.z;
-	output.Position.w = 1;
-	*/
-	output.Position.w = 1;
+	//output.Position.z = 1 - output.Position.z;
     return output;
 }
 

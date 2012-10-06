@@ -8,47 +8,9 @@
 
 glXeSurface_t * glXeSurfaces = NULL;
 
-extern void *Xe_pAlloc(struct XenosDevice *xe, u32 *phys, int size, int align);
+#define TEXTURE_SLOT_EMPTY -1
 
-#define TEXMIN 255
-
-struct XenosSurface * My_Xe_CreateTexture(struct XenosDevice *xe, unsigned int width, unsigned int height, unsigned int levels, int format, int tiled)
-{	
-	struct XenosSurface *surface = malloc(sizeof(struct XenosSurface));
-	memset(surface, 0, sizeof(struct XenosSurface));
-	int bypp = 0;
-
-	switch (format & XE_FMT_MASK)
-	{
-	case XE_FMT_8: bypp = 1; break;
-	case XE_FMT_5551: bypp = 2; break;
-	case XE_FMT_565: bypp = 2; break;
-	case XE_FMT_8888: bypp = 4; break;
-	case XE_FMT_16161616: bypp = 8; break;
-	}
-	assert(bypp);
-
-	int wpitch = (width * bypp + TEXMIN) &~TEXMIN;
-	int hpitch = (height + TEXMIN) &~TEXMIN;
-
-	surface->width = width;
-	surface->height = height;
-	surface->wpitch = wpitch;
-	surface->hpitch = hpitch;
-	surface->tiled = tiled;
-	surface->format = format;
-	surface->ptr_mip = 0;
-	surface->bypp = bypp;
-    surface->base = Xe_pAlloc(xe, &surface->ptr, hpitch * wpitch, 4096);
-
-    surface->use_filtering = 1;
-    surface->u_addressing = XE_TEXADDR_WRAP;
-    surface->v_addressing = XE_TEXADDR_WRAP;
-
-	return surface;
-}
-
-#define Xe_CreateTexture My_Xe_CreateTexture
+#define TEXMIN 128
 
 static inline void handle_small_surface_u8(struct XenosSurface * surf, void * buffer)
 {
@@ -193,7 +155,7 @@ void glTexEnvf (GLenum target, GLenum pname, GLfloat param)
 
 void glTexEnvi (GLenum target, GLenum pname, GLint param)
 {
-	
+	glTexEnvf(target, pname, (GLfloat)param);
 }
 
 /***********************************************************************
@@ -201,8 +163,16 @@ void glTexEnvi (GLenum target, GLenum pname, GLint param)
  ***********************************************************************/
 void XeGLInitTextures()
 {
+	int i = 0;
 	glXeSurfaces = (glXeSurface_t *)malloc(sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
 	memset(glXeSurfaces, 0, sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
+	
+	glXeSurface_t *tex;
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
+	{
+		tex = &glXeSurfaces[i];
+		tex->glnum = TEXTURE_SLOT_EMPTY;
+	}
 }
  
  
@@ -211,8 +181,10 @@ int xeCurrentTMU = 0;
 
 static void Xe_InitTexture(glXeSurface_t *tex)
 {
-	tex->glnum = 0;
+	// slot is empty
+	tex->glnum = TEXTURE_SLOT_EMPTY;
 
+	// destroy texture
 	if (tex->teximg)
 	{
 		Xe_DestroyTexture(xe, tex->teximg);
@@ -229,14 +201,14 @@ static glXeSurface_t *Xe_AllocTexture(void)
 	for (i = 0; i< XE_MAX_TEXTURE; i++)
 	{
 		tex = &glXeSurfaces[i];
-		// if either of these are 0 (or NULL) we just reuse it
+		// no texture
 		if (!tex->teximg)
 		{
 			Xe_InitTexture(tex);
 			return tex;
 		}
-
-		if (!tex->glnum)
+		// free slot
+		if (tex->glnum == TEXTURE_SLOT_EMPTY)
 		{
 			Xe_InitTexture(tex);
 			return tex;
@@ -244,7 +216,6 @@ static glXeSurface_t *Xe_AllocTexture(void)
 	}
 
 	xe_gl_error("Xe_AllocTexture: out of textures!!!\n");
-
 	return NULL;
 }
 
@@ -271,11 +242,12 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 		for (i = 0; i< XE_MAX_TEXTURE; i++)
 		{
 			tex = &glXeSurfaces[i];
-			
+			/*
 			if (tex->glnum == textures[i]) {
 				Xe_InitTexture(tex);
 				break;
 			}
+			*/ 
 		}
 	}
 }
@@ -299,12 +271,7 @@ void glBindTexture(GLenum target, GLuint texture)
 	glXeSurface_t *tex;
 	if (target != GL_TEXTURE_2D) 
 		return;
-		
-	// no texture
-	if (texture == 0) {
-		xeTmus[xeCurrentTMU].boundtexture = NULL;
-		return;
-	}
+	
 	xeTmus[xeCurrentTMU].boundtexture = NULL;
 	
 	// find a texture
@@ -312,7 +279,7 @@ void glBindTexture(GLenum target, GLuint texture)
 	{
 		tex = &glXeSurfaces[i];
 		
-		if (tex && tex->glnum && tex->glnum == texture)
+		if (tex && tex->glnum == texture)
 		{
 			xeTmus[xeCurrentTMU].boundtexture = tex;
 			break;
@@ -382,6 +349,7 @@ static inline int src_format_to_bypp(GLenum format)
 	else if (format == 4 || format == GL_RGBA)
 		return 4;
 	xe_gl_error ("D3D_FillTextureLevel: illegal format");
+	
 	return 0;
 }
 
@@ -394,6 +362,7 @@ static inline int dst_format_to_bypp(GLenum format)
 	else if (format == 4 || format == GL_RGBA)
 		return 4;
 	xe_gl_error ("D3D_FillTextureLevel: illegal format");
+	
 	return 0;
 }
 
@@ -401,6 +370,7 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 {
 	if (level > 0)
 		return;
+		
 	struct XenosSurface * surf = NULL;
 	
 	if (xeTmus[xeCurrentTMU].boundtexture && xeTmus[xeCurrentTMU].boundtexture->teximg ) {
@@ -465,6 +435,7 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 			}
 		}
 	}
+	
 	Xe_Surface_Unlock(xe, surf);
 	
 	handle_small_surface(surf, NULL);
@@ -475,13 +446,16 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 	int format;
 	if (type != GL_UNSIGNED_BYTE) {
 		xe_gl_error("glTexImage2D: Unrecognised pixel format\n");
+		return;
 	}
 	
 	if (target != GL_TEXTURE_2D)
 		return;
 		
-	if (!xeTmus[xeCurrentTMU].boundtexture)
+	if (!xeTmus[xeCurrentTMU].boundtexture) {
+		printf("Not texture binded\n");
 		return;
+	}
 		
 	if (level > 0)
 		return;
@@ -568,8 +542,6 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 		}
 	}
 	
-	printf("w: %d - h : %d - s : %d - d : %d\n", width, height, pixelformat, internalformat);
-	
 	Xe_Surface_Unlock(xe, surf);
 	handle_small_surface(surf, NULL);
 }
@@ -599,6 +571,7 @@ void glTexParameterf (GLenum target, GLenum pname, GLfloat param)
 
 	switch (pname)
 	{
+#if 1
 	case GL_TEXTURE_MIN_FILTER:
 		if ((int) param == GL_NEAREST_MIPMAP_NEAREST)
 		{
@@ -638,7 +611,7 @@ void glTexParameterf (GLenum target, GLenum pname, GLfloat param)
 			xeTmus[xeCurrentTMU].boundtexture->teximg->use_filtering = XE_TEXF_LINEAR;
 		else xeTmus[xeCurrentTMU].boundtexture->teximg->use_filtering = XE_TEXF_POINT;
 		break;
-
+#endif
 	case GL_TEXTURE_WRAP_S:
 		if ((int) param == GL_CLAMP)
 			xeTmus[xeCurrentTMU].boundtexture->teximg->u_addressing = XE_TEXADDR_CLAMP;

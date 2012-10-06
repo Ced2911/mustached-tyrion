@@ -12,7 +12,7 @@
  * Vertices
  ***********************************************************************/
  
-#define XE_MAX_VERTICES	16*1024*100
+#define XE_MAX_VERTICES	8*1024*1024
  
 typedef struct {	
     float x, y, z, w;
@@ -35,7 +35,8 @@ typedef struct {
 	unsigned int u32;
 } glColor_t; 
 
-glVerticesFormat_t * xe_Vertices;
+//glVerticesFormat_t * xe_Vertices;
+float * xe_Vertices;
 int xe_NumVerts;
 int xe_PrevNumVerts;
 glColor_t xe_CurrentColor;

@@ -86,7 +86,7 @@ static void ShowFPS() {
 void XenonGLDisplay()
 {    	
     // update vb cache !!!
-    Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
+    xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);    
     
     // Resolve
@@ -115,7 +115,7 @@ void XenonBeginGl()
 void XenonEndGl()
 {
 	// update vb cache !!!
-    Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
+    xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);
 	
 	// Resolve
