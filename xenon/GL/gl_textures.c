@@ -237,19 +237,18 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 {
 	int i;
 	glXeSurface_t *tex;
-
+/*
 	for (i = 0; i < n; i++) {
 		for (i = 0; i< XE_MAX_TEXTURE; i++)
 		{
 			tex = &glXeSurfaces[i];
-			/*
 			if (tex->glnum == textures[i]) {
 				Xe_InitTexture(tex);
 				break;
 			}
-			*/ 
 		}
 	}
+	*/
 }
 
 void glGenTextures(GLsizei n, GLuint *textures)
@@ -271,6 +270,11 @@ void glBindTexture(GLenum target, GLuint texture)
 	glXeSurface_t *tex;
 	if (target != GL_TEXTURE_2D) 
 		return;
+		
+	if (texture == 0) {
+		xeTmus[xeCurrentTMU].boundtexture = NULL;
+		return;
+	}
 	
 	xeTmus[xeCurrentTMU].boundtexture = NULL;
 	

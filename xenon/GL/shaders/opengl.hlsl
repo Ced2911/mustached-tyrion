@@ -34,6 +34,7 @@ VertexShaderOutput vs_main(VertexShaderInput input)
 	
 	// reverse Z
 	//output.Position.z = 1 - output.Position.z;
+	
     return output;
 }
 

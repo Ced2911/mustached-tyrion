@@ -81,7 +81,7 @@ void GL_SubmitVertexes()
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
 	
-    Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);
+    // Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);
     Xe_SetShader(xe, SHADER_TYPE_VERTEX, pVertexShader, 0);
     
     // set texture
@@ -101,13 +101,15 @@ void GL_SubmitVertexes()
 	}
 	// draw
 	// if (!(xe_PrimitiveMode == GL_QUADS || xe_PrimitiveMode == GL_QUAD_STRIP))
-	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
+	// Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
+	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), xe_PrevNumVerts, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
 }
 
 void glBegin(GLenum mode)
 {
 	xe_PrimitiveMode = mode;
 
+	// round vertices offset
 	xe_PrevNumVerts = xe_NumVerts;
 }
 
@@ -141,7 +143,6 @@ void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
 	} c;
 	
 	c.u32 = xe_CurrentColor.u32;
-	//c.u32 = 0xFFFFFFFF;
 	
 	*xe_Vertices++ = x;
 	*xe_Vertices++ = y;
@@ -194,10 +195,7 @@ void glEnableClientState(GLenum array)
 	TR
 }
 
-void glPointSize(GLfloat size)
-{
-	TR
-}
+
 
 void glDrawBuffer (GLenum mode)
 {
@@ -220,4 +218,18 @@ void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	poin
 
 GLenum glGetError(){
 	return GL_NO_ERROR;
+}
+
+void glPointSize(GLfloat size)
+{
+	
+}
+void glPointParameterf(	GLenum pname, GLfloat param)
+{
+	
+}
+
+void glPointParameterfv(GLenum pname,const GLfloat *  params)
+{
+	
 }

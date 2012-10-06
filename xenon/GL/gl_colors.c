@@ -21,6 +21,15 @@ void GL_SetColor (int red, int green, int blue, int alpha)
 	xe_CurrentColor.u32 = Gl_Color_2_Xe(red, green, blue, alpha);
 }
 
+/*
+void GL_SetColor (float red, float green, float blue, float alpha)
+{
+	xe_CurrentColor.a = alpha;
+	xe_CurrentColor.r = red;
+	xe_CurrentColor.g = green;
+	xe_CurrentColor.b = blue;
+}
+*/
 void glColor3f (GLfloat red, GLfloat green, GLfloat blue)
 {
 	GL_SetColor (red * 255, green * 255, blue * 255, 255);

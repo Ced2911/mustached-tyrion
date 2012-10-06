@@ -25,6 +25,7 @@ void XenonGLInit(){
 			{XE_USAGE_POSITION, 0, XE_TYPE_FLOAT4},
 			{XE_USAGE_TEXCOORD, 0, XE_TYPE_FLOAT2},			
 			{XE_USAGE_TEXCOORD, 1, XE_TYPE_FLOAT2},
+//			{XE_USAGE_COLOR, 0, XE_TYPE_FLOAT4},
 			{XE_USAGE_COLOR, 0, XE_TYPE_UBYTE4},
 		}
 	};
@@ -85,6 +86,9 @@ static void ShowFPS() {
 // classic way
 void XenonGLDisplay()
 {    	
+	// Set stream
+    Xe_SetStreamSource(xe, 0, pVbGL, 0, 10);
+	
     // update vb cache !!!
     xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);    
@@ -110,6 +114,9 @@ void XenonBeginGl()
     Xe_InvalidateState(xe);
     
     Xe_Sync(xe);
+    
+    // Set stream
+    Xe_SetStreamSource(xe, 0, pVbGL, 0, 10);
 }
 
 void XenonEndGl()
