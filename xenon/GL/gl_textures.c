@@ -164,7 +164,7 @@ void glTexEnvi (GLenum target, GLenum pname, GLint param)
 void XeGLInitTextures()
 {
 	int i = 0;
-	glXeSurfaces = (glXeSurface_t *)malloc(sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
+	glXeSurfaces = (glXeSurface_t *)memalign(128, sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
 	memset(glXeSurfaces, 0, sizeof(glXeSurface_t) * XE_MAX_TEXTURE);
 	
 	glXeSurface_t *tex;
@@ -174,9 +174,7 @@ void XeGLInitTextures()
 		tex->glnum = TEXTURE_SLOT_EMPTY;
 	}
 }
- 
- 
-static int d3d_TextureExtensionNumber = 1;
+
 int xeCurrentTMU = 0;
 
 static void Xe_InitTexture(glXeSurface_t *tex)
@@ -235,9 +233,10 @@ static void Xe_ReleaseTextures (void)
  
 void glDeleteTextures(GLsizei n, const GLuint *textures)
 {
+	TR
 	int i;
 	glXeSurface_t *tex;
-/*
+	
 	for (i = 0; i < n; i++) {
 		for (i = 0; i< XE_MAX_TEXTURE; i++)
 		{
@@ -248,18 +247,18 @@ void glDeleteTextures(GLsizei n, const GLuint *textures)
 			}
 		}
 	}
-	*/
 }
+
+static int texture_count = 1;
 
 void glGenTextures(GLsizei n, GLuint *textures)
 {
-	int i;
+	int i;	
 	
 	for(i = 0; i < n; i++)
 	{
 		glXeSurface_t *tex = Xe_AllocTexture();
-		tex->glnum = textures[i] = d3d_TextureExtensionNumber;
-		d3d_TextureExtensionNumber++;
+		tex->glnum = textures[i] = texture_count++;
 	}
 }
 
@@ -270,12 +269,7 @@ void glBindTexture(GLenum target, GLuint texture)
 	glXeSurface_t *tex;
 	if (target != GL_TEXTURE_2D) 
 		return;
-		
-	if (texture == 0) {
-		xeTmus[xeCurrentTMU].boundtexture = NULL;
-		return;
-	}
-	
+
 	xeTmus[xeCurrentTMU].boundtexture = NULL;
 	
 	// find a texture
@@ -301,9 +295,10 @@ void glBindTexture(GLenum target, GLuint texture)
 		xeTmus[xeCurrentTMU].boundtexture->glnum = texture;
 
 		// ensure that it won't be reused
-		if (texture > d3d_TextureExtensionNumber)
-			d3d_TextureExtensionNumber = texture;
+		if (texture > texture_count)
+			texture_count = texture;
 	}
+	
 	// this should never happen
 	if (!xeTmus[xeCurrentTMU].boundtexture) 
 		xe_gl_error("glBindTexture: out of textures!!!\n");
@@ -375,95 +370,105 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 	if (level > 0)
 		return;
 		
+	if (!xeTmus[xeCurrentTMU].boundtexture) {
+		printf("Not texture binded\n");
+		return;
+	}
+		
 	struct XenosSurface * surf = NULL;
 	
 	if (xeTmus[xeCurrentTMU].boundtexture && xeTmus[xeCurrentTMU].boundtexture->teximg ) {
 		surf = xeTmus[xeCurrentTMU].boundtexture->teximg;
 	}
 	
-	int srcbytes = src_format_to_bypp(format);
-	int dstbytes = dst_format_to_bypp(xeTmus[xeCurrentTMU].boundtexture->internalformat);
-	
-	uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
-	uint8_t * srcdata = (uint8_t*) pixels;
-	uint8_t * dstdata = surfbuf;
-	
-	int y, x;
+	if (surf) {
+		int srcbytes = src_format_to_bypp(format);
+		int dstbytes = dst_format_to_bypp(xeTmus[xeCurrentTMU].boundtexture->internalformat);
+		
+		uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+		uint8_t * srcdata = (uint8_t*) pixels;
+		uint8_t * dstdata = surfbuf;
+		
+		int y, x;
 
-	int pitch = (width * dstbytes);
-	int offset = 0;
-	
-	check_format(srcbytes, dstbytes);
+		int pitch = (width * dstbytes);
+		int offset = 0;
+		
+		check_format(srcbytes, dstbytes);
 
-	for (y = yoffset; y < (yoffset + height); y++) {
-		offset = (y * pitch)+(xoffset * dstbytes);
+		for (y = yoffset; y < height; y++) {
+			offset = (y * pitch)+(xoffset * dstbytes);
 
-		dstdata = surfbuf + offset;
-		for (x = xoffset; x < (xoffset + width); x++) {
-			if (srcbytes == 4) {
-				if (dstbytes == 4) {
-					dstdata[0] = srcdata[3];
-					dstdata[3] = srcdata[2];
-					dstdata[2] = srcdata[1];
-					dstdata[1] = srcdata[0];
-				} else if(dstbytes == 1) {
-					dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2] + (int) srcdata[3]) / 3;
-				}
+			dstdata = surfbuf + offset;
+			for (x = xoffset; x < width; x++) {
+				if (srcbytes == 4) {
+					if (dstbytes == 4) {
+						dstdata[0] = srcdata[3];
+						dstdata[3] = srcdata[2];
+						dstdata[2] = srcdata[1];
+						dstdata[1] = srcdata[0];
+					} else if(dstbytes == 1) {
+						dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2] + (int) srcdata[3]) / 3;
+					}
+						
+					srcdata += srcbytes;
+					dstdata += dstbytes;
 					
-				srcdata += srcbytes;
-				dstdata += dstbytes;
-				
-			} else if (srcbytes == 3) {
-				if (dstbytes == 4) {					
-					dstdata[0] = 0xff;
-					dstdata[3] = srcdata[2];
-					dstdata[2] = srcdata[1];
-					dstdata[1] = srcdata[0];
-				} else if (dstbytes == 1) {
-					dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+				} else if (srcbytes == 3) {
+					if (dstbytes == 4) {					
+						dstdata[0] = 0xff;
+						dstdata[3] = srcdata[2];
+						dstdata[2] = srcdata[1];
+						dstdata[1] = srcdata[0];
+					} else if (dstbytes == 1) {
+						dstdata[0] = ((int) srcdata[0] + (int) srcdata[1] + (int) srcdata[2]) / 3;
+					}
+						
+					srcdata += srcbytes;
+					dstdata += dstbytes;
+				} else if (srcbytes == 1) {
+					if (dstbytes == 1) {
+						dstdata[0] = srcdata[0];
+					} else if (dstbytes == 4) {
+						dstdata[0] = srcdata[0];
+						dstdata[1] = srcdata[0];
+						dstdata[2] = srcdata[0];
+						dstdata[3] = srcdata[0];
+					}
+					srcdata += srcbytes;
+					dstdata += dstbytes;
 				}
-					
-				srcdata += srcbytes;
-				dstdata += dstbytes;
-			} else if (srcbytes == 1) {
-				if (dstbytes == 1) {
-					dstdata[0] = srcdata[0];
-				} else if (dstbytes == 4) {
-					dstdata[0] = srcdata[0];
-					dstdata[1] = srcdata[0];
-					dstdata[2] = srcdata[0];
-					dstdata[3] = srcdata[0];
-				}
-				srcdata += srcbytes;
-				dstdata += dstbytes;
 			}
 		}
+		
+		Xe_Surface_Unlock(xe, surf);
+		
+		handle_small_surface(surf, NULL);
 	}
-	
-	Xe_Surface_Unlock(xe, surf);
-	
-	handle_small_surface(surf, NULL);
 }
 
 void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum pixelformat, GLenum type, const GLvoid *pixels)
 {
 	int format;
+	int need_texture = 1;
+	struct XenosSurface * surf = NULL;
+	
 	if (type != GL_UNSIGNED_BYTE) {
 		xe_gl_error("glTexImage2D: Unrecognised pixel format\n");
 		return;
 	}
-	
 	if (target != GL_TEXTURE_2D)
 		return;
 		
 	if (!xeTmus[xeCurrentTMU].boundtexture) {
-		printf("Not texture binded\n");
+		printf("No texture bound\n");
 		return;
 	}
-		
+	
 	if (level > 0)
 		return;
 		
+#if 1
 	int srcbytes = src_format_to_bypp(pixelformat);
 	int dstbytes = 4;
 	
@@ -490,10 +495,24 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 		return;
 	}
 	
-	struct XenosSurface * surf = Xe_CreateTexture(xe, width, height, 0, format, 0);
-	memset(surf->base, 0xFF, surf->wpitch * surf->hpitch);
+	if (xeTmus[xeCurrentTMU].boundtexture->teximg) {
+		surf = xeTmus[xeCurrentTMU].boundtexture->teximg;
+		if ((surf->width != width) || (surf->height != height) || (surf->format != format)) {
+			need_texture = 1;
+			// destroy texture
+			Xe_DestroyTexture(xe, xeTmus[xeCurrentTMU].boundtexture->teximg);
+		}
+		else {
+			need_texture = 0;
+		}
+	}
 	
-	xeTmus[xeCurrentTMU].boundtexture->teximg = surf;
+	if (need_texture) {			
+		surf = Xe_CreateTexture(xe, width, height, 0, format, 0);
+		xeTmus[xeCurrentTMU].boundtexture->teximg = surf;
+	}
+	
+	memset(surf->base, 0xFF, surf->wpitch * surf->hpitch);
 	xeTmus[xeCurrentTMU].boundtexture->internalformat = internalformat;
 		
 	uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
@@ -545,9 +564,10 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 			}
 		}
 	}
-	
 	Xe_Surface_Unlock(xe, surf);
-	handle_small_surface(surf, NULL);
+
+#endif	
+//	handle_small_surface(surf, NULL);
 }
 
 /** Not used in QII */
@@ -643,5 +663,6 @@ void glGetTexParameterfv (GLenum target, GLenum pname, GLfloat *params)
 {
 	
 }
+
 
 
