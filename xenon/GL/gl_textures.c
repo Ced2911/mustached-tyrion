@@ -12,6 +12,42 @@ glXeSurface_t * glXeSurfaces = NULL;
 
 #define TEXMIN 128
 
+// #define USE_TILED_TEXTURE 1
+
+static struct XenosSurface * MyXeCreateTexture(struct XenosDevice *xe, unsigned int width, unsigned int height, unsigned int levels, int format, int tiled)
+{
+	return Xe_CreateTexture(xe, width, height, levels, format, tiled);
+}
+
+static void * MyXeSurfaceLockRect(struct XenosDevice *xe, struct XenosSurface *surface, int x, int y, int w, int h, int flags)
+{
+	return Xe_Surface_LockRect(xe, surface, x, y, w, h, flags);
+}
+
+static void MyXeSurfaceUnlock(struct XenosDevice *xe, struct XenosSurface *surface)
+{
+	return Xe_Surface_Unlock(xe, surface);
+}
+#if 0
+void XeRefreshTexture(glXeSurface_t * surf) {
+	if (surf->dirty) {
+		Xe_Surface_LockRect(xe, surf->teximg, 0, 0, 0, 0, XE_LOCK_WRITE);
+		Xe_Surface_Unlock(xe, surf->teximg);
+		// surface is now clean
+		surf->dirty = 0;
+	}
+}
+
+void XeRefreshAllDirtyTextures() {
+	int i = 0;
+	for (i = 0; i< XE_MAX_TEXTURE; i++)
+	{
+		XeRefreshTexture(&glXeSurfaces[i]);
+	}
+}
+#endif
+
+#ifndef USE_TILED_TEXTURE
 static inline void handle_small_surface_u8(struct XenosSurface * surf, void * buffer)
 {
 	int width;
@@ -36,7 +72,7 @@ static inline void handle_small_surface_u8(struct XenosSurface * surf, void * bu
 	if(buffer)
         surf_data = (uint8_t *)buffer;
     else
-        surf_data = (uint8_t *)Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+        surf_data = (uint8_t *)MyXeSurfaceLockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 
 	src = data = surf_data;
 
@@ -59,7 +95,7 @@ static inline void handle_small_surface_u8(struct XenosSurface * surf, void * bu
 	}
 
     if(!buffer)
-        Xe_Surface_Unlock(xe, surf);
+        MyXeSurfaceUnlock(xe, surf);
 }
 
 static inline void handle_small_surface(struct XenosSurface * surf, void * buffer){
@@ -93,7 +129,7 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 	if(buffer)
         surf_data = (uint32_t *)buffer;
     else
-        surf_data = (uint32_t *)Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+        surf_data = (uint32_t *)MyXeSurfaceLockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 
 	src = data = surf_data;
 
@@ -116,8 +152,9 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 	}
 
     if(!buffer)
-        Xe_Surface_Unlock(xe, surf);
+        MyXeSurfaceUnlock(xe, surf);
 } 
+#endif
 
 /***********************************************************************
  * Texture environnement
@@ -345,28 +382,35 @@ void check_format(int srcbytes, int dstbytes) {
 
 static inline int src_format_to_bypp(GLenum format)
 {
+	int ret = 0;
 	if (format == 1 || format == GL_LUMINANCE)
-		return 1;
+		ret = 1;
 	else if (format == 3 || format == GL_RGB)
-		return 3;
+		ret = 3;
 	else if (format == 4 || format == GL_RGBA)
-		return 4;
-	xe_gl_error ("D3D_FillTextureLevel: illegal format");
-	
-	return 0;
+		ret = 4;
+	else 
+		xe_gl_error ("D3D_FillTextureLevel: illegal format");
+	if (ret != 4)
+		printf("src_format_to_bypp %d\n", ret);
+	return ret;
 }
 
 static inline int dst_format_to_bypp(GLenum format)
 {
+	int ret = 0;
 	if (format == 1 || format == GL_LUMINANCE)
-		return 1;
+		ret = 1;
 	else if (format == 3 || format == GL_RGB)
-		return 4;
+		ret = 4;
 	else if (format == 4 || format == GL_RGBA)
-		return 4;
-	xe_gl_error ("D3D_FillTextureLevel: illegal format");
-	
-	return 0;
+		ret = 4;
+	else
+		xe_gl_error ("D3D_FillTextureLevel: illegal format");
+		
+	if (ret != 4)
+		printf("dst_format_to_bypp %d\n", ret);
+	return ret;
 }
 
 void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * pixels)
@@ -389,7 +433,7 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 		int srcbytes = src_format_to_bypp(format);
 		int dstbytes = dst_format_to_bypp(xeTmus[xeCurrentTMU].boundtexture->internalformat);
 		
-		uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+		uint8_t * surfbuf = (uint8_t*) MyXeSurfaceLockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 		uint8_t * srcdata = (uint8_t*) pixels;
 		uint8_t * dstdata = surfbuf;
 		
@@ -444,10 +488,14 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 				}
 			}
 		}
+	
+		MyXeSurfaceUnlock(xe, surf);		
 		
-		Xe_Surface_Unlock(xe, surf);
-		
+		xeTmus[xeCurrentTMU].boundtexture->dirty = 1;
+
+#ifndef USE_TILED_TEXTURE	
 		handle_small_surface(surf, NULL);
+#endif		
 	}
 }
 
@@ -511,15 +559,19 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 		}
 	}
 	
-	if (need_texture) {			
-		surf = Xe_CreateTexture(xe, width, height, 0, format, 0);
+	if (need_texture) {	
+#ifdef USE_TILED_TEXTURE				
+		surf = MyXeCreateTexture(xe, width, height, 0, format, 1);
+#else
+		surf = MyXeCreateTexture(xe, width, height, 0, format, 0);
+#endif
 		xeTmus[xeCurrentTMU].boundtexture->teximg = surf;
 	}
 	
 	memset(surf->base, 0xFF, surf->wpitch * surf->hpitch);
 	xeTmus[xeCurrentTMU].boundtexture->internalformat = internalformat;
 		
-	uint8_t * surfbuf = (uint8_t*) Xe_Surface_LockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
+	uint8_t * surfbuf = (uint8_t*) MyXeSurfaceLockRect(xe, surf, 0, 0, 0, 0, XE_LOCK_WRITE);
 	uint8_t * srcdata = (uint8_t*) pixels;
 	uint8_t * dstdata = surfbuf;
 	int y, x;
@@ -568,8 +620,10 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 			}
 		}
 	}
-	Xe_Surface_Unlock(xe, surf);
+	MyXeSurfaceUnlock(xe, surf);
 
+
+	xeTmus[xeCurrentTMU].boundtexture->dirty = 1;
 #endif	
 //	handle_small_surface(surf, NULL);
 }

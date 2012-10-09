@@ -73,7 +73,7 @@ static void updateCullMode()
 	if (gl_cull_enable == GL_FALSE)
 	{
 		// disable culling
-		Xe_SetCullMode(xe, XE_CULL_NONE);
+		xe_state.cull_mode = XE_CULL_NONE;
 		return;
 	}
 	
@@ -85,17 +85,17 @@ static void updateCullMode()
 	if (gl_front_face == GL_CCW)
 	{
 		if (gl_cull_mode == GL_BACK)
-			Xe_SetCullMode(xe, XE_BACK_FRONTFACE_CCW);
+			xe_state.cull_mode = XE_BACK_FRONTFACE_CCW;
 		else if (gl_cull_mode == GL_FRONT)
-			Xe_SetCullMode(xe, XE_FRONT_FRONTFACE_CCW);
+			xe_state.cull_mode = XE_FRONT_FRONTFACE_CCW;
 		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
 	}
 	else if (gl_front_face == GL_CW)
 	{
 		if (gl_cull_mode == GL_BACK)
-			Xe_SetCullMode(xe, XE_BACK_FRONTFACE_CW);
+			xe_state.cull_mode = XE_BACK_FRONTFACE_CW;
 		else if (gl_cull_mode == GL_FRONT)
-			Xe_SetCullMode(xe, XE_FRONT_FRONTFACE_CW);
+			xe_state.cull_mode = XE_FRONT_FRONTFACE_CW;
 		else xe_gl_error ("GL_UpdateCull: illegal glCullFace\n");
 	}
 	else 
@@ -118,11 +118,13 @@ void glFrontFace (GLenum mode)
 {
 	gl_front_face = mode;
 	updateCullMode();
+	xe_state.dirty = 1;
 }
 void glCullFace (GLenum mode)
 {
 	gl_cull_mode = mode;
 	updateCullMode();
+	xe_state.dirty = 1;
 }
 /***********************************************************************
  * Depth
@@ -210,13 +212,14 @@ int Gl_ZCmp_2_Xe(GLenum mode)
 
 void glDepthFunc (GLenum func)
 {
-	Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
-	//Xe_SetZFunc(xe, Gl_Cmp_2_Xe(func));
+	xe_state.z_func = Gl_Cmp_2_Xe(func);
+	xe_state.dirty = 1;
 }
 
 void glDepthMask (GLboolean flag)
 {
-	Xe_SetZWrite(xe, flag == GL_TRUE ? 1 : 0);
+	xe_state.z_mask = (flag == GL_TRUE) ? 1 : 0;
+	xe_state.dirty = 1;
 }
 
 void glAlphaFunc (GLenum func, GLclampf ref)
@@ -226,8 +229,10 @@ void glAlphaFunc (GLenum func, GLclampf ref)
 		ref -= 1.f/255.f;
 		cmp = XE_CMP_GREATER;
 	}
-	Xe_SetAlphaFunc(xe, cmp);
-	Xe_SetAlphaRef(xe, ref);
+	
+	xe_state.alpha_test_func = cmp;
+	xe_state.alpha_test_ref = ref;
+	xe_state.dirty = 1;
 }
 
 /***********************************************************************
@@ -289,35 +294,14 @@ int Gl_Blend_2_Xe(GLenum factor)
 	return blend;
 }
 
-static int old_src_blend = XE_BLEND_ONE;
-static int old_dst_blend = XE_BLEND_ZERO;
-static int old_blend_op = XE_BLENDOP_ADD;
-static int blend_enabled = 0;
-
-static void updateBlend()
-{
-	#if 1
-	if (blend_enabled) {
-		Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
-	} else {
-		Xe_SetBlendControl(xe, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO);
-	}
-	
-	//printf("blend_enabled : %d, src : %d, dst : %d\n",blend_enabled,old_src_blend,old_dst_blend);
-	#else
-	// Xe_SetBlendControl(xe, old_src_blend, old_blend_op, old_dst_blend, old_src_blend, old_blend_op, old_dst_blend);
-		
-	Xe_SetBlendControl(xe, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA, XE_BLEND_SRCALPHA, XE_BLENDOP_ADD, XE_BLEND_INVSRCALPHA); 
-	#endif
-}
 
 void glBlendFunc(GLenum sfactor, GLenum dfactor)
 {
-	//printf("glBlendFunc src : %x, dst : %x\n",sfactor,dfactor);
-	old_src_blend = Gl_Blend_2_Xe(sfactor);
-	old_dst_blend = Gl_Blend_2_Xe(dfactor);
-	updateBlend();
+	xe_state.blend_src = Gl_Blend_2_Xe(sfactor);
+	xe_state.blend_dst = Gl_Blend_2_Xe(dfactor);
+	xe_state.dirty = 1;
 }
+
 /***********************************************************************
  * Blend
  ***********************************************************************/
@@ -330,12 +314,11 @@ void GlEnableDisable(GLenum cap, int enable)
 		break;
 		
 	case GL_BLEND:
-		blend_enabled = enable;
-		updateBlend();
+		xe_state.blend_enable = enable;
 		break;
 		
 	case GL_ALPHA_TEST:
-		Xe_SetAlphaTestEnable(xe, enable);
+		xe_state.alpha_test_enabled = enable;
 		break;
 
 	case GL_TEXTURE_2D:
@@ -348,11 +331,11 @@ void GlEnableDisable(GLenum cap, int enable)
 		else
 			gl_cull_enable = GL_TRUE;
 		updateCullMode();
-		return;
+		break;
 		
 	case GL_DEPTH_TEST:
-		Xe_SetZEnable(xe, enable);
-		return;
+		xe_state.z_enable = enable;
+		break;
 		
 	case GL_FOG:
 		return;
@@ -361,6 +344,8 @@ void GlEnableDisable(GLenum cap, int enable)
 	default:
 		return;
 	}
+	
+	xe_state.dirty = 1;
 }
 
 void glEnable(GLenum cap)
@@ -377,10 +362,9 @@ void glDisable(GLenum cap)
 /***********************************************************************
  * Misc
  ***********************************************************************/
-static int fill_back = 0;
-static int fill_front = 0;
 void glPolygonMode (GLenum face, GLenum mode)
 {
+	/*
 	int xmode = 0;
 	
 	if (mode == GL_LINE)
@@ -391,12 +375,67 @@ void glPolygonMode (GLenum face, GLenum mode)
 		xmode = XE_FILL_SOLID;
 	
 	if (face == GL_FRONT)
-		fill_front = xmode;
+		xe_state.fill_mode_front = xmode;
 	else if (face == GL_BACK)
-		fill_back = xmode;
+		xe_state.fill_mode_back = xmode;
 	else
-		fill_back = fill_front = xmode;
+		xe_state.fill_mode_front = xe_state.fill_mode_back = xmode;
+		
+	xe_state.dirty = 1;
+	*/ 
+}
+
+
+/***********************************************************************
+ * States Management
+ ***********************************************************************/
+void XeUpdateStates() {
+	if (xe_state.dirty) {
+		// blending		
+		if (xe_state.blend_enable) {
+			Xe_SetBlendControl(xe, xe_state.blend_src, xe_state.blend_op, xe_state.blend_dst, xe_state.blend_src, xe_state.blend_op, xe_state.blend_dst);
+		}
+		else {
+			Xe_SetBlendControl(xe, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO, XE_BLEND_ONE, XE_BLENDOP_ADD, XE_BLEND_ZERO);
+		}
+		
+		// Alpha test		
+		Xe_SetAlphaTestEnable(xe, xe_state.alpha_test_enabled);		
+		Xe_SetAlphaFunc(xe, xe_state.alpha_test_func);
+		Xe_SetAlphaRef(xe, xe_state.alpha_test_ref);
+		
+		// Depth
+		Xe_SetZEnable(xe, xe_state.z_enable);
+		Xe_SetZWrite(xe, xe_state.z_mask);		
+		Xe_SetZFunc(xe, xe_state.z_func);
+		
+		// Culling
+		Xe_SetCullMode(xe, xe_state.cull_mode);
+		
+		// other		
+		//Xe_SetFillMode(xe, xe_state.fill_mode_front, xe_state.fill_mode_back);
+		//Xe_SetFillMode(xe, XE_FILL_SOLID, XE_FILL_SOLID);
+		
+		xe_state.dirty = 0;
+	}
+}
+
+void XeInitStates() {
+	xe_state.fill_mode_back = xe_state.fill_mode_front = XE_FILL_SOLID;	
+	xe_state.cull_mode = XE_CULL_NONE;
 	
-	Xe_SetFillMode(xe, fill_front, fill_back);
+	xe_state.blend_src = XE_BLEND_ONE;
+	xe_state.blend_op = XE_BLENDOP_ADD;
+	xe_state.blend_dst = XE_BLEND_ZERO;
+	
+	xe_state.alpha_test_enabled = 0;
+	xe_state.alpha_test_func = 0;
+	xe_state.alpha_test_ref = 0;
+	
+	xe_state.z_enable = 0;
+	xe_state.z_mask = 0;
+	xe_state.z_func = 0;
+	
+	xe_state.dirty = 1;
 }
 

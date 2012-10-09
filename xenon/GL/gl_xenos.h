@@ -60,6 +60,9 @@ typedef struct glXeSurface_s{
 	GLenum internalformat;
 	
 	struct XenosSurface * teximg;
+	
+	// refresh texture cache only when need
+	int dirty;
 } glXeSurface_t;
 
 glXeSurface_t * glXeSurfaces;
@@ -103,6 +106,42 @@ void XeGlInitializeMatrix(xe_matrix_t *m);
 void XeGlCheckDirtyMatrix(xe_matrix_t *m);
 
 /***********************************************************************
+ * States
+ ***********************************************************************/
+typedef struct {
+	// blending
+	int blend_enable;
+	int blend_op;
+	int blend_src;
+	int blend_dst;
+	
+	// Alpha test
+	int alpha_test_enabled;
+	int alpha_test_func;
+	float alpha_test_ref;
+	
+	// Depth
+	int z_enable;
+	int z_mask;
+	int z_func;
+	
+	// Culling
+	int cull_mode;
+	
+	// other
+	int fill_mode_front;
+	int fill_mode_back;
+	
+	// Reupload all states
+	int dirty;
+	
+} xe_states_t;
+
+xe_states_t xe_state;
+void XeInitStates();
+void XeUpdateStates();
+
+/***********************************************************************
  * Global
  ***********************************************************************/
 struct XenosDevice _xe, *xe;
@@ -127,3 +166,4 @@ void XenonBeginGl();
 void XenonEndGl();
 void XeGLInitTextures();
 void GL_InitShaderCache();
+void XeRefreshAllDirtyTextures();

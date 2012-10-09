@@ -71,6 +71,9 @@ void XenonGLInit(){
 	// init textures
 	XeGLInitTextures();
 	
+	// init states
+	XeInitStates();
+	
 	// not yet ...
 	Xe_InvalidateState(xe);
 	Xe_SetClearColor(xe, 0);
@@ -124,6 +127,7 @@ void XenonGLDisplay()
 
 void XenonBeginGl()
 {
+	
 	// Reset states
     Xe_InvalidateState(xe);
     
@@ -134,7 +138,7 @@ void XenonBeginGl()
 }
 
 void XenonEndGl()
-{
+{	
 	// update vb cache !!!
     xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);

@@ -112,7 +112,7 @@ void GL_InitShaderCache() {
 	cache[0].hash = tmp.hash;
 	cache[0].code = (void*)pPixelColorShader;
 	
-	// MODULATE TEX 1
+	// MODULATE COLOR * TEX 1
 	tmp.hash = 0;
 	tmp.states[0].tmu_env_mode = XE_ENV_MODE_MODULATE;
 	cache[1].hash = tmp.hash;
@@ -124,7 +124,7 @@ void GL_InitShaderCache() {
 	cache[2].hash = tmp.hash;
 	cache[2].code = (void*)pPixelTextureShader;
 	
-	// MODULATE TEX 1 * TEX 2
+	// MODULATE COLOR * TEX 1 * TEX 2
 	tmp.hash = 0;
 	tmp.states[0].tmu_env_mode = XE_ENV_MODE_MODULATE;
 	tmp.states[1].tmu_env_mode = XE_ENV_MODE_MODULATE;	
@@ -132,6 +132,7 @@ void GL_InitShaderCache() {
 	cache[3].code = (void*)pPixelModulateShader2;
 }
 
+// GL_TEXTURE_ENV_MODE defaults to GL_MODULATE
 static void GL_SelectShaders() {
 	int i = 0;
 	pixel_shader_pipeline_t shader;
@@ -150,6 +151,7 @@ static void GL_SelectShaders() {
 					break;
 			}
 		}
+		// no more texture used
 		else {
 			break;
 		}
@@ -175,11 +177,15 @@ static void GL_SelectShaders() {
 	printf("Unknow hash : %d\n", shader.hash);
 }
 
+
 static void GL_SubmitVertexes()
 {	
 	// never draw this one
 	if (gl_cull_mode == GL_FRONT_AND_BACK)
 		return;
+		
+	// update states if dirty
+	XeUpdateStates();
 
 	// update if dirty
 	XeGlCheckDirtyMatrix(&projection_matrix);
@@ -204,6 +210,8 @@ static void GL_SubmitVertexes()
 	
 	// draw
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), xe_PrevNumVerts, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
+	
+	//printBlendValue();
 }
 
 void glBegin(GLenum mode)

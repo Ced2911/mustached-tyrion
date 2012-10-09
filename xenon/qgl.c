@@ -702,6 +702,20 @@ void QGL_Shutdown( void )
 	qglVertexPointer             = NULL;
 	qglViewport                  = NULL;
 }
+
+
+void logGlEnable(GLenum cap)
+{
+	//printf("glEnable : %d\n", cap);
+	glEnable(cap);
+}
+
+void logGlDisable(GLenum cap)
+{
+	//printf("glDisable : %d\n", cap);
+	glDisable(cap);
+}
+
 void glPointParameterf(GLenum pname, GLfloat param);
 void glPointParameterfv(GLenum pname, const GLfloat * params);
 
@@ -1136,8 +1150,12 @@ qboolean QGL_Init( const char *dllname )
 	qglPointParameterfvEXT = glPointParameterfv;
 	qglPointSize = glPointSize;
 	*/
-	qglSelectTextureSGIS = glActiveTexture;
-	qglMTexCoord2fSGIS = glMultiTexCoord2f;
+	//qglSelectTextureSGIS = glActiveTexture;
+	//qglMTexCoord2fSGIS = glMultiTexCoord2f;
+	
+	// test
+	qglEnable = logGlEnable;
+	qglDisable = logGlDisable;
 #endif	
 	qglGetString = glGetString;
 	return true;
@@ -1153,5 +1171,3 @@ void GLimp_LogNewFrame( void )
 {
 	printf( "*** R_BeginFrame ***\n");
 }
-
-
