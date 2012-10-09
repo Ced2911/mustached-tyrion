@@ -7,7 +7,7 @@ struct VertexShaderInput
     float4 Position : POSITION0;	// model xyzw
     float2 uv0: TEXCOORD0;			// texture 0 uv
 	float2 uv1: TEXCOORD1;			// texture 1 uv
-	float4 color: COLOR;			// color
+	float4 color: COLOR0;			// color
 };
 
 struct VertexShaderOutput
@@ -15,9 +15,8 @@ struct VertexShaderOutput
     float4 Position : POSITION0;	// model xyzw
     float2 uv0: TEXCOORD0;			// texture 0 uv
 	float2 uv1: TEXCOORD1;			// texture 1 uv
-	float4 color: COLOR;			// color
+	float4 color: COLOR0;			// color
 };
-
 
 VertexShaderOutput vs_main(VertexShaderInput input)
 {
@@ -31,9 +30,6 @@ VertexShaderOutput vs_main(VertexShaderInput input)
 	output.uv0 = input.uv0;
 	output.uv1 = input.uv1;
 	output.color = input.color;
-	
-	// reverse Z
-	//output.Position.z = 1 - output.Position.z;
 	
     return output;
 }

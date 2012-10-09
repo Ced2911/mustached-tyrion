@@ -125,31 +125,35 @@ static inline void handle_small_surface(struct XenosSurface * surf, void * buffe
 
 void glTexEnvf (GLenum target, GLenum pname, GLfloat param)
 {
-	if (target != GL_TEXTURE_ENV)
+	if (target != GL_TEXTURE_ENV) {
 		xe_gl_error("glTexEnvf: unimplemented target\n");
+		return;
+	}
 	
 	if (!xeTmus[xeCurrentTMU].boundtexture) return;
 	if (!xeTmus[xeCurrentTMU].boundtexture->teximg ) return;
-	if (target != GL_TEXTURE_2D) return;
-	
 	/** Do shader work here !! **/
 	switch (pname)
 	{
 		case GL_TEXTURE_ENV_MODE:
-		switch ((GLint)param)
-		{
-			case GL_REPLACE:
-			xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_REPLACE;
-			break;
+			switch ((GLint)param)
+			{
+				case GL_REPLACE:
+					xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_REPLACE;
+					break;
 
-			case GL_MODULATE:
-			xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_MODULATE;			
+				case GL_MODULATE:
+					xeTmus[xeCurrentTMU].texture_env_mode = (int)GL_MODULATE;			
+					break;
+				
+				default:
+					xe_gl_error("glTexEnvf: unimplemented param\n");
+					break;
+			}
 			break;
-			
-			default:
-			xe_gl_error("glTexEnvf: unimplemented param\n");
+		default:
+			xe_gl_error("glTexEnvf: unimplemented pname\n");
 			break;
-		}
 	}
 }
 
@@ -396,11 +400,11 @@ void glTexSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset, G
 		
 		check_format(srcbytes, dstbytes);
 
-		for (y = yoffset; y < height; y++) {
+		for (y = yoffset; y < (yoffset + height); y++) {
 			offset = (y * pitch)+(xoffset * dstbytes);
-
 			dstdata = surfbuf + offset;
-			for (x = xoffset; x < width; x++) {
+			
+			for (x = xoffset; x < (xoffset + width); x++) {
 				if (srcbytes == 4) {
 					if (dstbytes == 4) {
 						dstdata[0] = srcdata[3];
@@ -523,7 +527,7 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 	check_format(srcbytes, dstbytes);
 
 	for (y = 0; y <height; y++) {
-		dstdata = surfbuf + (y * (width * dstbytes));
+		dstdata = surfbuf + ((y * width) * dstbytes);
 		for (x = 0; x < width; x++) {
 			if (srcbytes == 4) {
 				if (dstbytes == 4) {
@@ -575,9 +579,52 @@ void glGetTexImage (GLenum target, GLint level, GLenum format, GLenum type, GLvo
 {
 	
 }
-
 /***********************************************************************
+ * 
+ * Multi texturing
+ * 
+ ***********************************************************************/
+
+static int getTmu(GLenum texture)
+{
+	switch(texture) {
+		case GL_TEXTURE0_SGIS:
+		case GL_TEXTURE0:
+			return 0;
+		case GL_TEXTURE1_SGIS:
+		case GL_TEXTURE1:
+			return 1;
+		case GL_TEXTURE2:
+			return 2;
+		case GL_TEXTURE3:
+			return 3;
+		default:
+			return 0;
+	}
+}
+
+void glActiveTexture(GLenum texture)
+{
+	xeCurrentTMU = getTmu(texture);
+}
+
+void glMultiTexCoord1f(GLenum target, GLfloat s)
+{
+	int tmu = getTmu(target);
+	xe_TextCoord[tmu].u = s;
+	xe_TextCoord[tmu].v = 0;
+}
+
+void glMultiTexCoord2f(GLenum target, GLfloat s, GLfloat t)
+{
+	int tmu = getTmu(target);
+	xe_TextCoord[tmu].u = s;
+	xe_TextCoord[tmu].v = t;
+}
+/***********************************************************************
+ * 
  * Images parameters
+ * 
  ***********************************************************************/
  
 #define XE_TEXF_NONE	2

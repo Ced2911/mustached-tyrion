@@ -1123,11 +1123,21 @@ qboolean QGL_Init( const char *dllname )
 	qglVertex3f                  = 	glVertex3f;
 	qglVertex3fv                 = 	glVertex3fv;
 	qglViewport                  = 	glViewport;
+	
+	// extentions
+	qglVertexPointer             = 	glVertexPointer;
+	qglTexCoordPointer           = 	glTexCoordPointer;
+	qglColorPointer              = 	glColorPointer;
+	qglDisableClientState        = 	glDisableClientState;
+	qglEnableClientState         = 	glEnableClientState;
+	qglDrawArrays                = 	glDrawArrays;
 	/*
 	qglPointParameterfEXT = glPointParameterf;
 	qglPointParameterfvEXT = glPointParameterfv;
 	qglPointSize = glPointSize;
 	*/
+	qglSelectTextureSGIS = glActiveTexture;
+	qglMTexCoord2fSGIS = glMultiTexCoord2f;
 #endif	
 	qglGetString = glGetString;
 	return true;
@@ -1143,5 +1153,3 @@ void GLimp_LogNewFrame( void )
 {
 	printf( "*** R_BeginFrame ***\n");
 }
-
-

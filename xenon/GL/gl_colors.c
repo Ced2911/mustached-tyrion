@@ -8,14 +8,14 @@ unsigned int Gl_Color_2_Xe (GLclampf red, GLclampf green, GLclampf blue, GLclamp
 {
 	return COLOR_ARGB
 	(
-		BYTE_CLAMP (alpha),
-		BYTE_CLAMP (red),
-		BYTE_CLAMP (green),
-		BYTE_CLAMP (blue)
+		BYTE_CLAMP(alpha),
+		BYTE_CLAMP(red),
+		BYTE_CLAMP(green),
+		BYTE_CLAMP(blue)
 	);
 }
 
-void GL_SetColor (int red, int green, int blue, int alpha)
+void GL_SetColor (float red, float green, float blue, float alpha)
 {
 	// overwrite color incase verts set it
 	xe_CurrentColor.u32 = Gl_Color_2_Xe(red, green, blue, alpha);

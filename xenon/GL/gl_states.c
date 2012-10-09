@@ -51,7 +51,7 @@ void glClear (GLbitfield mask)
 	Xe_Clear(xe, flags);
 }
 
-#define MAKE_COLOR4(r,g,b,a) ((a&0xFF)<<24 | ((b&0xFF)<<16) | ((g&0xFF)<<8) | (r&0xFF))
+#define MAKE_COLOR4(a,r,g,b) ((unsigned int)((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff)))
 
 void glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
@@ -355,6 +355,7 @@ void GlEnableDisable(GLenum cap, int enable)
 		return;
 		
 	case GL_FOG:
+		return;
 	case GL_POLYGON_OFFSET_FILL:
 	case GL_POLYGON_OFFSET_LINE:
 	default:

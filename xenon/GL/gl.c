@@ -25,7 +25,6 @@ void XenonGLInit(){
 			{XE_USAGE_POSITION, 0, XE_TYPE_FLOAT4},
 			{XE_USAGE_TEXCOORD, 0, XE_TYPE_FLOAT2},			
 			{XE_USAGE_TEXCOORD, 1, XE_TYPE_FLOAT2},
-//			{XE_USAGE_COLOR, 0, XE_TYPE_FLOAT4},
 			{XE_USAGE_COLOR, 0, XE_TYPE_UBYTE4},
 		}
 	};
@@ -51,12 +50,18 @@ void XenonGLInit(){
 	xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, XE_MAX_VERTICES * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);
 	
+	// Create indices
+	pIbGL = Xe_CreateIndexBuffer(xe, XE_MAX_INDICES_PER_DRAW, XE_FMT_INDEX16);
+	xe_indices = Xe_IB_Lock(xe, pIbGL, 0, XE_MAX_INDICES_PER_DRAW, XE_LOCK_WRITE);
+	Xe_IB_Unlock(xe, pIbGL);
+	
 	// init matrices
 	XeGlInitializeMatrix(&projection_matrix);
 	XeGlInitializeMatrix(&modelview_matrix);
 	
 	// init vertices
 	xe_NumVerts = 0;
+	xe_NumIndices = 0;
 	xe_CurrentColor.u32 = 0xFFFFFFFF;
 	
 	// init textures
@@ -89,9 +94,12 @@ void XenonGLDisplay()
 	// Set stream
     Xe_SetStreamSource(xe, 0, pVbGL, 0, 10);
 	
-    // update vb cache !!!
+    // update vb and ib cache !!!
     xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
-	Xe_VB_Unlock(xe, pVbGL);    
+	Xe_VB_Unlock(xe, pVbGL);
+	
+	xe_indices = Xe_IB_Lock(xe, pIbGL, 0, XE_MAX_INDICES_PER_DRAW, XE_LOCK_WRITE);
+	Xe_IB_Unlock(xe, pIbGL); 
     
     // Resolve
     Xe_Resolve(xe);

@@ -12,7 +12,10 @@
 #define XE_PRIMTYPE_QUADLIST 13
 */
 
-int Gl_Prim_2_Xe_Prim(GLenum mode)
+extern GLenum gl_cull_mode;
+static int use_indice_buffer = 0;
+
+static int Gl_Prim_2_Xe_Prim(GLenum mode)
 {
 	// default to this
 	int ret = XE_PRIMTYPE_TRIANGLELIST;
@@ -45,7 +48,7 @@ int Gl_Prim_2_Xe_Prim(GLenum mode)
 	return ret;
 }
 
-int Gl_Prim_2_Size(GLenum mode, int size) {
+static int Gl_Prim_2_Size(GLenum mode, int size) {
 	// default to this
 	int ret = size;
 	switch (xe_PrimitiveMode) {
@@ -71,12 +74,12 @@ int Gl_Prim_2_Size(GLenum mode, int size) {
 	
 	return ret;
 }
-extern GLenum gl_cull_mode;
-void GL_SubmitVertexes()
+static void GL_SubmitVertexes()
 {	
-	
-	//if (gl_cull_mode != GL_FRONT_AND_BACK)
-	//	return;
+	// never draw this one
+	if (gl_cull_mode == GL_FRONT_AND_BACK)
+		return;
+
 	// update if dirty
 	XeGlCheckDirtyMatrix(&projection_matrix);
 	XeGlCheckDirtyMatrix(&modelview_matrix);
@@ -93,6 +96,7 @@ void GL_SubmitVertexes()
 			// Color * tex
 			Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelModulateShader, 0);
 		}
+		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelModulateShader, 0);
 		Xe_SetTexture(xe, 0, xeTmus[xeCurrentTMU].boundtexture->teximg);
 	}
 	else {
@@ -100,23 +104,22 @@ void GL_SubmitVertexes()
 		Xe_SetTexture(xe, 0, NULL);
 	}
 	// draw
-	// if (!(xe_PrimitiveMode == GL_QUADS || xe_PrimitiveMode == GL_QUAD_STRIP))
-	// Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), 0, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), xe_PrevNumVerts, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
 }
 
 void glBegin(GLenum mode)
 {
 	xe_PrimitiveMode = mode;
-
-	// round vertices offset
+	
 	xe_PrevNumVerts = xe_NumVerts;
+	xe_PrevNumIndices = xe_NumIndices;
 }
 
 void glEnd()
 {
 	// submit vertices
 	GL_SubmitVertexes();
+	use_indice_buffer = 0;
 };
 
 
@@ -149,11 +152,18 @@ void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
 	*xe_Vertices++ = z;
 	*xe_Vertices++ = 1;
 
-	*xe_Vertices++ = xe_TextCoord[0].u;
-	*xe_Vertices++ = xe_TextCoord[0].v;
-	*xe_Vertices++ = xe_TextCoord[1].u;
-	*xe_Vertices++ = xe_TextCoord[1].v;
+	/* 
+*xe_Vertices++ = xe_TextCoord[0].u;
+*xe_Vertices++ = xe_TextCoord[0].v;
+*xe_Vertices++ = xe_TextCoord[1].u;
+*xe_Vertices++ = xe_TextCoord[1].v;
+	*/
 
+	int i = 0;
+	for(i = 0; i < XE_MAX_TMUS; i++) {
+		*xe_Vertices++ = xe_TextCoord[i].u;
+		*xe_Vertices++ = xe_TextCoord[i].v;
+	}
 	*xe_Vertices++ = c.f;
 #endif	
 	// next vertex
@@ -190,30 +200,10 @@ void glTexCoord2fv (const GLfloat *v)
 	xe_TextCoord[0].v = v[1];
 }
 
-void glEnableClientState(GLenum array)
-{
-	TR
-}
-
-
-
-void glDrawBuffer (GLenum mode)
-{
-	
-}
 
 void glFinish (void)
 {
 	
-}
-void glArrayElement(GLint i)
-{
-	TR
-}
-
-void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
-{
-	TR
 }
 
 GLenum glGetError(){
@@ -232,4 +222,140 @@ void glPointParameterf(	GLenum pname, GLfloat param)
 void glPointParameterfv(GLenum pname,const GLfloat *  params)
 {
 	
+}
+
+/***********************************************************************
+ * 
+ * Batch Rendering
+ * 
+ **********************************************************************/ 
+ 
+typedef struct gl_varray_pointer_s
+{
+	GLint size;
+	GLenum type;
+	GLsizei stride;
+	GLvoid *pointer;
+} gl_varray_pointer_t;
+
+static gl_varray_pointer_t vertexPointer;
+static gl_varray_pointer_t colorPointer;
+static gl_varray_pointer_t texCoordPointer[XE_MAX_TMUS];
+static int vArray_TMU = 0;
+
+void glDrawBuffer (GLenum mode)
+{
+	TR
+}
+ 
+void glArrayElement(GLint i)
+{
+	// TR
+}
+
+void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
+{
+	if (type != GL_FLOAT) 
+		xe_gl_error("Unimplemented color pointer type");
+
+	colorPointer.size = size;
+	colorPointer.type = type;
+	colorPointer.stride = stride;
+	colorPointer.pointer = (GLvoid *) pointer;
+}
+
+void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer)
+{
+	if (type != GL_FLOAT) 
+		xe_gl_error("Unimplemented texcoord pointer type\n");
+
+	texCoordPointer[vArray_TMU].size = size;
+	texCoordPointer[vArray_TMU].type = type;
+	texCoordPointer[vArray_TMU].stride = stride;
+	texCoordPointer[vArray_TMU].pointer = (GLvoid *) pointer;
+}
+
+void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer)
+{
+	if (type != GL_FLOAT) 
+		xe_gl_error("Unimplemented vertex pointer type");
+
+	vertexPointer.size = size;
+	vertexPointer.type = type;
+	vertexPointer.stride = stride;
+	vertexPointer.pointer = (GLvoid *) pointer;
+}
+
+void glDrawArrays (GLenum mode, GLint first, GLsizei count)
+{
+	int i;
+	int v;
+	int tmu;
+	unsigned char *vp;
+	unsigned char *stp[XE_MAX_TMUS];
+
+	// required by the spec
+	if (!vertexPointer.pointer) return;
+
+	vp = ((unsigned char *) vertexPointer.pointer + first);
+
+	for (tmu = 0; tmu < XE_MAX_TMUS; tmu++)
+	{
+		if (texCoordPointer[tmu].pointer)
+			stp[tmu] = ((unsigned char *) texCoordPointer[tmu].pointer + first);
+		else stp[tmu] = NULL;
+	}
+
+	// send through standard begin/end processing
+	glBegin (mode);
+
+	for (i = 0, v = first; i < count; i++, v++)
+	{
+		for (tmu = 0; tmu < XE_MAX_TMUS; tmu++)
+		{
+			if (stp[tmu])
+			{
+				xe_TextCoord[tmu].u = ((float *) stp[tmu])[0];
+				xe_TextCoord[tmu].v = ((float *) stp[tmu])[1];
+
+				stp[tmu] += texCoordPointer[tmu].stride;
+			}
+		}
+
+		if (vertexPointer.size == 2)
+			glVertex2fv ((float *) vp);
+		else if (vertexPointer.size == 3)
+			glVertex3fv ((float *) vp);
+
+		vp += vertexPointer.stride;
+	}
+
+	glEnd ();
+}
+
+void glEnableClientState(GLenum array)
+{
+	
+}
+
+void glDisableClientState (GLenum array)
+{
+	// switch the pointer to NULL
+	switch (array)
+	{
+	case GL_VERTEX_ARRAY:
+		vertexPointer.pointer = NULL;
+		break;
+
+	case GL_COLOR_ARRAY:
+		colorPointer.pointer = NULL;
+		break;
+
+	case GL_TEXTURE_COORD_ARRAY:
+		texCoordPointer[vArray_TMU].pointer = NULL;
+		break;
+
+	default:
+		xe_gl_error("Invalid Vertex Array Spec...!\n");
+	}
 }

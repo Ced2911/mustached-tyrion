@@ -37,8 +37,11 @@ typedef struct {
 
 //glVerticesFormat_t * xe_Vertices;
 float * xe_Vertices;
+int16_t * xe_indices;
 int xe_NumVerts;
 int xe_PrevNumVerts;
+int xe_NumIndices;
+int xe_PrevNumIndices;
 glColor_t xe_CurrentColor;
 glTextCoord_t xe_TextCoord[2];
 
@@ -110,6 +113,7 @@ struct XenosShader * pPixelTextureShader;
 struct XenosShader * pCurrentPs;
 struct XenosShader * pCurrentTexturedPs;
 struct XenosVertexBuffer * pVbGL;
+struct XenosVertexBuffer * pIbGL;
 
 /***********************************************************************
  * Utils
