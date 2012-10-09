@@ -55,3 +55,6 @@ float4 ps_modulate(PixelShaderInput input): COLOR {
 float4 ps_texture(PixelShaderInput input): COLOR {
     return tex2D(texture0, input.uv0);
 }
+float4 ps_modulate_2(PixelShaderInput input): COLOR {
+    return input.color * tex2D(texture0, input.uv0) * tex2D(texture1, input.uv1);
+}

@@ -594,11 +594,14 @@ static int getTmu(GLenum texture)
 		case GL_TEXTURE1_SGIS:
 		case GL_TEXTURE1:
 			return 1;
+			/*			
 		case GL_TEXTURE2:
 			return 2;
 		case GL_TEXTURE3:
 			return 3;
+			*/
 		default:
+			TR
 			return 0;
 	}
 }

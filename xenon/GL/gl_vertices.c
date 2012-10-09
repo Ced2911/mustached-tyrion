@@ -74,6 +74,107 @@ static int Gl_Prim_2_Size(GLenum mode, int size) {
 	
 	return ret;
 }
+
+enum {
+	XE_ENV_MODE_DISABLED = 0,
+	XE_ENV_MODE_REPLACE,
+	XE_ENV_MODE_MODULATE,
+	XE_ENV_MODE_ADD,		// not implemented
+	XE_ENV_MODE_DECAL,		// not implemented
+	XE_ENV_MODE_BLEND,		// not implemented
+	XE_ENV_MAX
+};
+
+typedef union {
+	struct {
+		unsigned int tmu_env_mode:4;	//	4
+	} states[XE_MAX_TMUS];				// 	2 * 4 > 8
+	
+	unsigned int hash;
+} pixel_shader_pipeline_t;
+
+typedef struct pixel_shader_cache_s {
+	unsigned int hash;
+	void * code;
+} pixel_shader_cache_t;
+
+static pixel_shader_cache_t cache[XE_ENV_MAX * XE_MAX_TMUS];
+
+
+void GL_InitShaderCache() {
+	pixel_shader_pipeline_t tmp;
+	memset(&cache, 0, (XE_ENV_MAX * XE_MAX_TMUS) * sizeof(pixel_shader_cache_t));
+	
+	// some know shaders
+	
+	// SIMPLE COLOR
+	tmp.hash = 0;
+	cache[0].hash = tmp.hash;
+	cache[0].code = (void*)pPixelColorShader;
+	
+	// MODULATE TEX 1
+	tmp.hash = 0;
+	tmp.states[0].tmu_env_mode = XE_ENV_MODE_MODULATE;
+	cache[1].hash = tmp.hash;
+	cache[1].code = (void*)pPixelModulateShader;
+		
+	// REPLACE TEX 1
+	tmp.hash = 0;
+	tmp.states[0].tmu_env_mode = XE_ENV_MODE_REPLACE;
+	cache[2].hash = tmp.hash;
+	cache[2].code = (void*)pPixelTextureShader;
+	
+	// MODULATE TEX 1 * TEX 2
+	tmp.hash = 0;
+	tmp.states[0].tmu_env_mode = XE_ENV_MODE_MODULATE;
+	tmp.states[1].tmu_env_mode = XE_ENV_MODE_MODULATE;	
+	cache[3].hash = tmp.hash;
+	cache[3].code = (void*)pPixelModulateShader2;
+}
+
+static void GL_SelectShaders() {
+	int i = 0;
+	pixel_shader_pipeline_t shader;
+	shader.hash = 0;
+	
+	for (i=0; i<XE_MAX_TMUS; i++) {    
+		// set texture
+		if (xeTmus[i].enabled && xeTmus[i].boundtexture) {
+			switch(xeTmus[i].texture_env_mode) {
+				case GL_REPLACE:
+					shader.states[i].tmu_env_mode = XE_ENV_MODE_REPLACE;
+					break;
+				default:
+				case GL_MODULATE:
+					shader.states[i].tmu_env_mode = XE_ENV_MODE_MODULATE;
+					break;
+			}
+		}
+		else {
+			break;
+		}
+	}
+	// color only !!!
+	if (shader.hash == 0) {
+		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelColorShader, 0);
+		return;
+	}
+	
+	// look into cache
+	for (i=0; i<XE_ENV_MAX * XE_MAX_TMUS; i++) {
+		if (cache[i].hash) {
+			if (cache[i].hash == shader.hash) {
+				Xe_SetShader(xe, SHADER_TYPE_PIXEL, cache[i].code, 0);
+				return;
+			}
+		}
+	}
+	
+	// create it and add it to cache
+	/* todo */
+	printf("Unknow hash : %d\n", shader.hash);
+}
+
 static void GL_SubmitVertexes()
 {	
 	// never draw this one
@@ -87,22 +188,20 @@ static void GL_SubmitVertexes()
     // Xe_SetStreamSource(xe, 0, pVbGL, xe_PrevNumVerts * sizeof(glVerticesFormat_t), 10);
     Xe_SetShader(xe, SHADER_TYPE_VERTEX, pVertexShader, 0);
     
-    // set texture
-    if (xeTmus[xeCurrentTMU].enabled && xeTmus[xeCurrentTMU].boundtexture) {
-		if (xeTmus[xeCurrentTMU].texture_env_mode == GL_REPLACE) {
-			// tex
-			Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelTextureShader, 0);
-		} else {
-			// Color * tex
-			Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelModulateShader, 0);
+    int i = 0;
+    // setup texture    
+    for(i=0; i<XE_MAX_TMUS; i++) {    
+		// set texture
+		if (xeTmus[i].enabled && xeTmus[i].boundtexture) {
+			Xe_SetTexture(xe, i, xeTmus[i].boundtexture->teximg);
 		}
-		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelModulateShader, 0);
-		Xe_SetTexture(xe, 0, xeTmus[xeCurrentTMU].boundtexture->teximg);
+		else {
+			Xe_SetTexture(xe, i, NULL);
+		}
 	}
-	else {
-		Xe_SetShader(xe, SHADER_TYPE_PIXEL, pPixelColorShader, 0);	
-		Xe_SetTexture(xe, 0, NULL);
-	}
+	// setup shaders
+	GL_SelectShaders();
+	
 	// draw
 	Xe_DrawPrimitive(xe, Gl_Prim_2_Xe_Prim(xe_PrimitiveMode), xe_PrevNumVerts, Gl_Prim_2_Size(xe_PrimitiveMode, (xe_NumVerts - xe_PrevNumVerts)));
 }

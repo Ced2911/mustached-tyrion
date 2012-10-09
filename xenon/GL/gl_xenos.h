@@ -109,11 +109,12 @@ struct XenosDevice _xe, *xe;
 struct XenosShader * pVertexShader;
 struct XenosShader * pPixelColorShader;
 struct XenosShader * pPixelModulateShader;
+struct XenosShader * pPixelModulateShader2;
 struct XenosShader * pPixelTextureShader;
 struct XenosShader * pCurrentPs;
 struct XenosShader * pCurrentTexturedPs;
 struct XenosVertexBuffer * pVbGL;
-struct XenosVertexBuffer * pIbGL;
+struct XenosIndicesBuffer * pIbGL;
 
 /***********************************************************************
  * Utils
@@ -125,3 +126,4 @@ void XenonGLDisplay();
 void XenonBeginGl();
 void XenonEndGl();
 void XeGLInitTextures();
+void GL_InitShaderCache();

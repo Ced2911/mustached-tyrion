@@ -1153,3 +1153,5 @@ void GLimp_LogNewFrame( void )
 {
 	printf( "*** R_BeginFrame ***\n");
 }
+
+

@@ -8,6 +8,7 @@
 typedef unsigned int DWORD;
 #include "shaders/opengl.ps.color.h"
 #include "shaders/opengl.ps.modulate.h"
+#include "shaders/opengl.ps.modulate2.h"
 #include "shaders/opengl.ps.texture.h"
 #include "shaders/opengl.vs.h"
 
@@ -34,6 +35,9 @@ void XenonGLInit(){
 	
 	pPixelModulateShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_modulate);
 	Xe_InstantiateShader(xe, pPixelModulateShader, 0);
+	
+	pPixelModulateShader2 = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_modulate_2);
+	Xe_InstantiateShader(xe, pPixelModulateShader2, 0);
 	
 	pPixelColorShader = Xe_LoadShaderFromMemory(xe, (void*) g_xps_ps_color);
 	Xe_InstantiateShader(xe, pPixelColorShader, 0);
@@ -71,6 +75,8 @@ void XenonGLInit(){
 	Xe_InvalidateState(xe);
 	Xe_SetClearColor(xe, 0);
 	
+	GL_InitShaderCache();
+	
 }
 
 static void ShowFPS() {
@@ -98,7 +104,7 @@ void XenonGLDisplay()
     xe_Vertices = Xe_VB_Lock(xe, pVbGL, 0, xe_NumVerts * sizeof(glVerticesFormat_t), XE_LOCK_WRITE);
 	Xe_VB_Unlock(xe, pVbGL);
 	
-	xe_indices = Xe_IB_Lock(xe, pIbGL, 0, XE_MAX_INDICES_PER_DRAW, XE_LOCK_WRITE);
+	xe_indices = Xe_IB_Lock(xe, pIbGL, 0, xe_NumIndices, XE_LOCK_WRITE);
 	Xe_IB_Unlock(xe, pIbGL); 
     
     // Resolve
