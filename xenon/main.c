@@ -12,6 +12,7 @@
 #include <usb/usbmain.h>
 #include <time/time.h>
 #include <ppc/timebase.h>
+#include <ppc/atomic.h>
 #include <xenon_soc/xenon_power.h>
 #include <elf/elf.h>
 #include <dirent.h>
@@ -20,6 +21,36 @@
 
 extern void network_init_sys();
 extern void threading_init();
+#ifdef CAPS
+extern DISC_INTERFACE usb2mass_ops_1;
+#endif
+
+
+#ifdef CAPS
+#ifndef mutex_t
+typedef int mutex_t;
+#endif
+
+void _FAT_lock_init(mutex_t *mutex)
+{
+	*mutex=0;
+}
+
+void _FAT_lock_deinit(mutex_t *mutex)
+{
+	*mutex=0;
+}
+
+void _FAT_lock(mutex_t *mutex)
+{
+	lock(mutex);
+}
+
+void _FAT_unlock(mutex_t *mutex)
+{
+	unlock(mutex);
+}
+#endif
 
 void main (int argc, char **argv)
 {
@@ -42,7 +73,10 @@ void main (int argc, char **argv)
 	xenon_atapi_init();
 
 	fatInitDefault();
-	
+#ifdef CAPS	
+	fatMountSimple("udb", &usb2mass_ops_1);
+	printf("CAPTURE BUILD !!!\n");
+#endif	
 	// Quake II
 	
 	char * newargv[] = {

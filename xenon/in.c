@@ -3,11 +3,17 @@
 #include <usb/usbmain.h>
 #include <debug.h>
 #include "../client/client.h"
-
+#ifdef CAPS
+#include <libcaps/lib.h>
+#endif
 #define SIDE_THRESHOLD	0.22f
 #define LOOK_THRESHOLD	0.22f
 #define LOOK_VALUE	35
 #define SIDE_VALUE	7
+
+void mini_do_poll(void);
+
+#define usb_do_poll mini_do_poll
 
 static struct controller_data_s ctrl, old_ctrl;
 
@@ -16,6 +22,13 @@ cvar_t	*in_joystick;
 void IN_Init (void)
 {
 	memset(&ctrl, 0, sizeof(struct controller_data_s));
+#ifdef CAPS
+	static int init_caps = 0; 
+	if (init_caps == 0) {
+		xenon_caps_init("udb:/quake2.mp4");
+		init_caps = 1;
+	}
+#endif
 }
 
 void IN_Shutdown (void)
@@ -90,7 +103,13 @@ void IN_Move (usercmd_t *cmd)
 	else if (!ctrl.down && old_ctrl.down) {
 		Key_Event(K_DOWNARROW, 0, 0);
 	}
-		
+#ifdef CAPS
+	if (ctrl.a && !old_ctrl.a) {
+		xenon_caps_start();
+	} else if (ctrl.y && !old_ctrl.y) {
+		xenon_caps_end();
+	}
+#endif
 	// AxisSide
 	if (fabs(f1_x) > SIDE_THRESHOLD)
 	{

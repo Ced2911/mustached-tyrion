@@ -25,6 +25,7 @@ CTF_DIR=$(CURDIR)/game
 NULL_DIR=$(CURDIR)/null
 REF_SOFT_DIR=$(CURDIR)/ref_soft
 REF_GL_DIR=$(CURDIR)/ref_gl
+REF_XE_DIR=$(CURDIR)/ref_xenon
 
 INCLUDES	:= xenon
 
@@ -40,7 +41,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 
 CC=xenon-gcc
 BASE_CFLAGS=-Dstricmp=strcasecmp -DGAME_HARD_LINKED -DREF_HARD_LINKED
-RELEASE_CFLAGS=$(BASE_CFLAGS) -O6 -fomit-frame-pointer -fno-strength-reduce -funroll-loops -fexpensive-optimizations -g -fno-tree-vectorize -fno-tree-slp-vectorize -ftree-vectorizer-verbose=1 -Wall $(MACHDEP) $(INCLUDE) -DLIBXENON -D__BIG_ENDIAN__ -D__ppc__ -D__powerpc__ -D__POWERPC__ -DELF -D__BIGENDIAN__ -D__PPC__ -D__BIGENDIAN__
+RELEASE_CFLAGS=$(BASE_CFLAGS) -Ofast -fomit-frame-pointer -fno-strength-reduce -funroll-loops -fexpensive-optimizations -g -fno-tree-vectorize -fno-tree-slp-vectorize -ftree-vectorizer-verbose=1 -Wall $(MACHDEP) $(INCLUDE) -DLIBXENON -D__BIG_ENDIAN__ -D__ppc__ -D__powerpc__ -D__POWERPC__ -DELF -D__BIGENDIAN__ -D__PPC__ -D__BIGENDIAN__
 DEBUG_CFLAGS=$(BASE_CFLAGS) $(RELEASE_CFLAGS)
 LDFLAGS=-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -L$(DEVKITXENON)/usr/lib -L$(DEVKITXENON)/xenon/lib/32 -lxenon -lm -lfat -T $(LDSCRIPT)
 
@@ -88,6 +89,15 @@ gl:
 		$(BUILD_RELEASE_DIR)/game \
 		$(BUILD_RELEASE_DIR)/ref_soft  $(BUILD_RELEASE_DIR)/ref_gl
 	$(MAKE) -f makefile.xenon _gl BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS)"
+
+_xee: $(BUILDDIR)/quake2_xee
+
+xee:
+	@-mkdir $(BUILD_RELEASE_DIR) \
+		$(BUILD_RELEASE_DIR)/client \
+		$(BUILD_RELEASE_DIR)/game \
+		$(BUILD_RELEASE_DIR)/ref_xenon $(BUILD_RELEASE_DIR)/ref_xenon/xee
+	$(MAKE) -f makefile.xenon _xee BUILDDIR=$(BUILD_RELEASE_DIR) CFLAGS="$(RELEASE_CFLAGS)"
 
 #############################################################################
 # CLIENT/SERVER
@@ -230,6 +240,29 @@ QUAKE2_GL = \
 	$(BUILDDIR)/client/qgl.o \
 	$(BUILDDIR)/client/video_gl.o
 
+QUAKE2_XEE = \
+	$(BUILDDIR)/ref_xenon/gl_draw.o \
+	$(BUILDDIR)/ref_xenon/gl_image.o \
+	$(BUILDDIR)/ref_xenon/gl_light.o \
+	$(BUILDDIR)/ref_xenon/gl_mesh.o \
+	$(BUILDDIR)/ref_xenon/gl_model.o \
+	$(BUILDDIR)/ref_xenon/gl_rmain.o \
+	$(BUILDDIR)/ref_xenon/gl_rmisc.o \
+	$(BUILDDIR)/ref_xenon/gl_rsurf.o \
+	$(BUILDDIR)/ref_xenon/gl_warp.o \
+	$(BUILDDIR)/ref_xenon/xee/qgl.o \
+	$(BUILDDIR)/ref_xenon/xee/gl.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_colors.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_matrices.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_png_utils.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_states.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_textures.o \
+	$(BUILDDIR)/ref_xenon/xee/gl_vertices.o \
+	$(BUILDDIR)/ref_xenon/xee/VecMatrix.o \
+	$(BUILDDIR)/ref_xenon/xee/VecVector.o \
+	$(BUILDDIR)/ref_xenon/xee/video_xe.o \
+	$(BUILDDIR)/ref_xenon/xee/xe_imp.o
+	
 $(BUILDDIR)/quake2_xenon : $(QUAKE2_OBJS) $(QUAKE2_SOFT)
 	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_SOFT) $(LDFLAGS)
 	@echo converting and stripping ... $(notdir $@)
@@ -244,6 +277,13 @@ $(BUILDDIR)/quake2_xenon_gl : $(QUAKE2_OBJS) $(QUAKE2_GL)
 	xenon-strip quake2_xenon.elf32
 	cp quake2_xenon.elf32 /srv/tftp/tftpboot/xenon
 
+$(BUILDDIR)/quake2_xee : $(QUAKE2_OBJS) $(QUAKE2_XEE)
+	$(CC) $(CFLAGS) -o $@ $(QUAKE2_OBJS) $(QUAKE2_XEE) $(LDFLAGS) -lpng -lz -lm -lxenon
+	@echo converting and stripping ... $(notdir $@)
+	xenon-objcopy -O elf32-powerpc --adjust-vma 0x80000000 $@ quake2_xee.elf32
+	xenon-strip quake2_xee.elf32
+	cp quake2_xee.elf32 /srv/tftp/tftpboot/xenon
+	
 #############################################################################
 # CLIENT
 #############################################################################
@@ -644,6 +684,75 @@ $(BUILDDIR)/ref_gl/gl_rsurf.o :       $(REF_GL_DIR)/gl_rsurf.c
 $(BUILDDIR)/ref_gl/gl_warp.o :        $(REF_GL_DIR)/gl_warp.c
 	$(DO_SHLIB_CC)
 
+
+#############################################################################
+# REF XENON
+#############################################################################
+$(BUILDDIR)/ref_xenon/gl_draw.o :        $(REF_XE_DIR)/gl_draw.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_image.o :       $(REF_XE_DIR)/gl_image.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_light.o :       $(REF_XE_DIR)/gl_light.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_mesh.o :        $(REF_XE_DIR)/gl_mesh.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_model.o :       $(REF_XE_DIR)/gl_model.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_rmain.o :       $(REF_XE_DIR)/gl_rmain.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_rmisc.o :       $(REF_XE_DIR)/gl_rmisc.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_rsurf.o :       $(REF_XE_DIR)/gl_rsurf.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/gl_warp.o :        $(REF_XE_DIR)/gl_warp.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/qgl.o : $(REF_XE_DIR)/xee/qgl.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl.o : $(REF_XE_DIR)/xee/gl.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_colors.o : $(REF_XE_DIR)/xee/gl_colors.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_matrices.o : $(REF_XE_DIR)/xee/gl_matrices.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_png_utils.o : $(REF_XE_DIR)/xee/gl_png_utils.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_png_utils.o : $(REF_XE_DIR)/xee/gl_png_utils.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_states.o : $(REF_XE_DIR)/xee/gl_states.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_textures.o : $(REF_XE_DIR)/xee/gl_textures.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/gl_vertices.o : $(REF_XE_DIR)/xee/gl_vertices.c
+	$(DO_SHLIB_CC)
+
+$(BUILDDIR)/ref_xenon/xee/VecMatrix.o : $(REF_XE_DIR)/xee/VecMatrix.c
+	$(DO_SHLIB_CC)
+	
+$(BUILDDIR)/ref_xenon/xee/VecVector.o : $(REF_XE_DIR)/xee/VecVector.c
+	$(DO_SHLIB_CC)
+	
+$(BUILDDIR)/ref_xenon/xee/video_xe.o : $(REF_XE_DIR)/xee/video_xe.c
+	$(DO_SHLIB_CC)
+	
+$(BUILDDIR)/ref_xenon/xee/xe_imp.o : $(REF_XE_DIR)/xee/xe_imp.c
+	$(DO_SHLIB_CC)
 
 #############################################################################
 # MISC
