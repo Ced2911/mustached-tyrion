@@ -177,8 +177,8 @@ static void GL_SelectShaders() {
 	printf("Unknow hash : %d\n", shader.hash);
 }
 
-
-static void GL_SubmitVertexes()
+//void xeeSubmit() {}
+void xeeSubmit()
 {	
 	// never draw this one
 	if (gl_cull_mode == GL_FRONT_AND_BACK)
@@ -214,7 +214,7 @@ static void GL_SubmitVertexes()
 	//printBlendValue();
 }
 
-void glBegin(GLenum mode)
+void xeeBegin(GLenum mode)
 {
 	xe_PrimitiveMode = mode;
 	
@@ -222,15 +222,13 @@ void glBegin(GLenum mode)
 	xe_PrevNumIndices = xe_NumIndices;
 }
 
-void glEnd()
+void xeeEnd()
 {
-	// submit vertices
-	GL_SubmitVertexes();
-	use_indice_buffer = 0;
+	// _xeeSubmit();
 };
 
 
-void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
+void xeeVertex3f (GLfloat x, GLfloat y, GLfloat z)
 {
 	// add a new vertex to the list with the specified xyz and inheriting the current normal, color and texcoords
 	// (per spec at http://www.opengl.org/sdk/docs/man/xhtml/glVertex.xml)
@@ -277,31 +275,31 @@ void glVertex3f (GLfloat x, GLfloat y, GLfloat z)
 	xe_NumVerts++;
 }
 
-void glVertex2fv (const GLfloat *v)
+void xeeVertex2fv (const GLfloat *v)
 {
-	glVertex3f (v[0], v[1], 0);
+	xeeVertex3f (v[0], v[1], 0);
 }
 
 
-void glVertex2f (GLfloat x, GLfloat y)
+void xeeVertex2f (GLfloat x, GLfloat y)
 {
-	glVertex3f (x, y, 0);
+	xeeVertex3f (x, y, 0);
 }
 
 
-void glVertex3fv (const GLfloat *v)
+void xeeVertex3fv (const GLfloat *v)
 {
-	glVertex3f (v[0], v[1], v[2]);
+	xeeVertex3f (v[0], v[1], v[2]);
 }
 
-void glTexCoord2f (GLfloat s, GLfloat t)
+void xeeTexCoord2f (GLfloat s, GLfloat t)
 {
 	xe_TextCoord[0].u = s;
 	xe_TextCoord[0].v = t;
 }
 
 
-void glTexCoord2fv (const GLfloat *v)
+void xeeTexCoord2fv (const GLfloat *v)
 {
 	xe_TextCoord[0].u = v[0];
 	xe_TextCoord[0].v = v[1];
@@ -329,140 +327,4 @@ void glPointParameterf(	GLenum pname, GLfloat param)
 void glPointParameterfv(GLenum pname,const GLfloat *  params)
 {
 	
-}
-
-/***********************************************************************
- * 
- * Batch Rendering
- * 
- **********************************************************************/ 
- 
-typedef struct gl_varray_pointer_s
-{
-	GLint size;
-	GLenum type;
-	GLsizei stride;
-	GLvoid *pointer;
-} gl_varray_pointer_t;
-
-static gl_varray_pointer_t vertexPointer;
-static gl_varray_pointer_t colorPointer;
-static gl_varray_pointer_t texCoordPointer[XE_MAX_TMUS];
-static int vArray_TMU = 0;
-
-void glDrawBuffer (GLenum mode)
-{
-	TR
-}
- 
-void glArrayElement(GLint i)
-{
-	// TR
-}
-
-void glColorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *	pointer)
-{
-	if (type != GL_FLOAT) 
-		xe_gl_error("Unimplemented color pointer type");
-
-	colorPointer.size = size;
-	colorPointer.type = type;
-	colorPointer.stride = stride;
-	colorPointer.pointer = (GLvoid *) pointer;
-}
-
-void glTexCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer)
-{
-	if (type != GL_FLOAT) 
-		xe_gl_error("Unimplemented texcoord pointer type\n");
-
-	texCoordPointer[vArray_TMU].size = size;
-	texCoordPointer[vArray_TMU].type = type;
-	texCoordPointer[vArray_TMU].stride = stride;
-	texCoordPointer[vArray_TMU].pointer = (GLvoid *) pointer;
-}
-
-void glVertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid *pointer)
-{
-	if (type != GL_FLOAT) 
-		xe_gl_error("Unimplemented vertex pointer type");
-
-	vertexPointer.size = size;
-	vertexPointer.type = type;
-	vertexPointer.stride = stride;
-	vertexPointer.pointer = (GLvoid *) pointer;
-}
-
-void glDrawArrays (GLenum mode, GLint first, GLsizei count)
-{
-	int i;
-	int v;
-	int tmu;
-	unsigned char *vp;
-	unsigned char *stp[XE_MAX_TMUS];
-
-	// required by the spec
-	if (!vertexPointer.pointer) return;
-
-	vp = ((unsigned char *) vertexPointer.pointer + first);
-
-	for (tmu = 0; tmu < XE_MAX_TMUS; tmu++)
-	{
-		if (texCoordPointer[tmu].pointer)
-			stp[tmu] = ((unsigned char *) texCoordPointer[tmu].pointer + first);
-		else stp[tmu] = NULL;
-	}
-
-	// send through standard begin/end processing
-	glBegin (mode);
-
-	for (i = 0, v = first; i < count; i++, v++)
-	{
-		for (tmu = 0; tmu < XE_MAX_TMUS; tmu++)
-		{
-			if (stp[tmu])
-			{
-				xe_TextCoord[tmu].u = ((float *) stp[tmu])[0];
-				xe_TextCoord[tmu].v = ((float *) stp[tmu])[1];
-
-				stp[tmu] += texCoordPointer[tmu].stride;
-			}
-		}
-
-		if (vertexPointer.size == 2)
-			glVertex2fv ((float *) vp);
-		else if (vertexPointer.size == 3)
-			glVertex3fv ((float *) vp);
-
-		vp += vertexPointer.stride;
-	}
-
-	glEnd ();
-}
-
-void glEnableClientState(GLenum array)
-{
-	
-}
-
-void glDisableClientState (GLenum array)
-{
-	// switch the pointer to NULL
-	switch (array)
-	{
-	case GL_VERTEX_ARRAY:
-		vertexPointer.pointer = NULL;
-		break;
-
-	case GL_COLOR_ARRAY:
-		colorPointer.pointer = NULL;
-		break;
-
-	case GL_TEXTURE_COORD_ARRAY:
-		texCoordPointer[vArray_TMU].pointer = NULL;
-		break;
-
-	default:
-		xe_gl_error("Invalid Vertex Array Spec...!\n");
-	}
 }

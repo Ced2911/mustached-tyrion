@@ -40,10 +40,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "../client/ref.h"
-
+#include "xee.h"
 #include "qgl.h"
 
-#define	REF_VERSION	"GL 0.01"
+#define	REF_VERSION	"XEE 0.01"
 
 // up / down
 #define	PITCH	0

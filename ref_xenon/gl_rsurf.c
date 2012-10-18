@@ -146,14 +146,15 @@ void DrawGLWaterPoly (glpoly_t *p)
 	float	*v;
 
 	p = WaterWarpPolyVerts (p);
-	qglBegin (GL_TRIANGLE_FAN);
+	xeeBegin (GL_TRIANGLE_FAN);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
-		qglTexCoord2f (v[3], v[4]);
-		qglVertex3fv (v);
+		xeeTexCoord2f (v[3], v[4]);
+		xeeVertex3fv (v);
 	}
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 }
 void DrawGLWaterPolyLightmap (glpoly_t *p)
 {
@@ -161,14 +162,15 @@ void DrawGLWaterPolyLightmap (glpoly_t *p)
 	float	*v;
 
 	p = WaterWarpPolyVerts (p);
-	qglBegin (GL_TRIANGLE_FAN);
+	xeeBegin (GL_TRIANGLE_FAN);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
-		qglTexCoord2f (v[5], v[6]);
-		qglVertex3fv (v);
+		xeeTexCoord2f (v[5], v[6]);
+		xeeVertex3fv (v);
 	}
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 }
 #endif
 
@@ -182,14 +184,15 @@ void DrawGLPoly (glpoly_t *p)
 	int		i;
 	float	*v;
 
-	qglBegin (GL_POLYGON);
+	xeeBegin (GL_POLYGON);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
-		qglTexCoord2f (v[3], v[4]);
-		qglVertex3fv (v);
+		xeeTexCoord2f (v[3], v[4]);
+		xeeVertex3fv (v);
 	}
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 }
 
 //============
@@ -212,14 +215,15 @@ void DrawGLFlowingPoly (msurface_t *fa)
 	if(scroll == 0.0)
 		scroll = -64.0;
 
-	qglBegin (GL_POLYGON);
+	xeeBegin (GL_POLYGON);
 	v = p->verts[0];
 	for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 	{
-		qglTexCoord2f ((v[3] + scroll), v[4]);
-		qglVertex3fv (v);
+		xeeTexCoord2f ((v[3] + scroll), v[4]);
+		xeeVertex3fv (v);
 	}
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 }
 //PGM
 //============
@@ -250,12 +254,13 @@ void R_DrawTriangleOutlines (void)
 			{
 				for (j=2 ; j<p->numverts ; j++ )
 				{
-					qglBegin (GL_LINE_STRIP);
-					qglVertex3fv (p->verts[0]);
-					qglVertex3fv (p->verts[j-1]);
-					qglVertex3fv (p->verts[j]);
-					qglVertex3fv (p->verts[0]);
-					qglEnd ();
+					xeeBegin (GL_LINE_STRIP);
+					xeeVertex3fv (p->verts[0]);
+					xeeVertex3fv (p->verts[j-1]);
+					xeeVertex3fv (p->verts[j]);
+					xeeVertex3fv (p->verts[0]);
+					xeeEnd ();
+					xeeSubmit();
 				}
 			}
 		}
@@ -272,37 +277,42 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset )
 {
 	if ( soffset == 0 && toffset == 0 )
 	{
+		xeeBegin (GL_POLYGON);
 		for ( ; p != 0; p = p->chain )
 		{
 			float *v;
 			int j;
-
-			qglBegin (GL_POLYGON);
+			
 			v = p->verts[0];
 			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
 			{
-				qglTexCoord2f (v[5], v[6] );
-				qglVertex3fv (v);
+				xeeTexCoord2f (v[5], v[6] );
+				xeeVertex3fv (v);
 			}
-			qglEnd ();
+			
 		}
+		xeeEnd ();
+		xeeSubmit();
 	}
 	else
 	{
+		xeeBegin (GL_POLYGON);
+		
 		for ( ; p != 0; p = p->chain )
 		{
 			float *v;
 			int j;
 
-			qglBegin (GL_POLYGON);
 			v = p->verts[0];
 			for (j=0 ; j<p->numverts ; j++, v+= VERTEXSIZE)
 			{
-				qglTexCoord2f (v[5] - soffset, v[6] - toffset );
-				qglVertex3fv (v);
+				xeeTexCoord2f (v[5] - soffset, v[6] - toffset );
+				xeeVertex3fv (v);
 			}
-			qglEnd ();
 		}
+		
+		xeeEnd ();
+		xeeSubmit();
 	}
 }
 
@@ -784,33 +794,37 @@ dynamic:
 			if(scroll == 0.0)
 				scroll = -64.0;
 
+			xeeBegin (GL_POLYGON);			
 			for ( p = surf->polys; p; p = p->chain )
 			{
 				v = p->verts[0];
-				qglBegin (GL_POLYGON);
 				for (i=0 ; i< nv; i++, v+= VERTEXSIZE)
 				{
 					qglMTexCoord2fSGIS( GL_TEXTURE0_SGIS, (v[3]+scroll), v[4]);
 					qglMTexCoord2fSGIS( GL_TEXTURE1_SGIS, v[5], v[6]);
-					qglVertex3fv (v);
+					xeeVertex3fv (v);
 				}
-				qglEnd ();
 			}
+			xeeEnd ();
+			xeeSubmit();
 		}
 		else
 		{
+			xeeBegin (GL_POLYGON);
+			
 			for ( p = surf->polys; p; p = p->chain )
 			{
 				v = p->verts[0];
-				qglBegin (GL_POLYGON);
+				
 				for (i=0 ; i< nv; i++, v+= VERTEXSIZE)
 				{
 					qglMTexCoord2fSGIS( GL_TEXTURE0_SGIS, v[3], v[4]);
 					qglMTexCoord2fSGIS( GL_TEXTURE1_SGIS, v[5], v[6]);
-					qglVertex3fv (v);
+					xeeVertex3fv (v);
 				}
-				qglEnd ();
 			}
+			xeeEnd ();
+			xeeSubmit();
 		}
 //PGM
 //==========
@@ -831,36 +845,38 @@ dynamic:
 			scroll = -64 * ( (r_newrefdef.time / 40.0) - (int)(r_newrefdef.time / 40.0) );
 			if(scroll == 0.0)
 				scroll = -64.0;
-
+			
+			xeeBegin (GL_POLYGON);
 			for ( p = surf->polys; p; p = p->chain )
 			{
 				v = p->verts[0];
-				qglBegin (GL_POLYGON);
 				for (i=0 ; i< nv; i++, v+= VERTEXSIZE)
 				{
 					qglMTexCoord2fSGIS( GL_TEXTURE0_SGIS, (v[3]+scroll), v[4]);
 					qglMTexCoord2fSGIS( GL_TEXTURE1_SGIS, v[5], v[6]);
-					qglVertex3fv (v);
+					xeeVertex3fv (v);
 				}
-				qglEnd ();
 			}
+			xeeEnd ();
+			xeeSubmit();
 		}
 		else
 		{
 //PGM
-//==========
+//==========			
+			xeeBegin (GL_POLYGON);
 			for ( p = surf->polys; p; p = p->chain )
 			{
 				v = p->verts[0];
-				qglBegin (GL_POLYGON);
 				for (i=0 ; i< nv; i++, v+= VERTEXSIZE)
 				{
 					qglMTexCoord2fSGIS( GL_TEXTURE0_SGIS, v[3], v[4]);
 					qglMTexCoord2fSGIS( GL_TEXTURE1_SGIS, v[5], v[6]);
-					qglVertex3fv (v);
+					xeeVertex3fv (v);
 				}
-				qglEnd ();
 			}
+			xeeEnd ();
+			xeeSubmit();
 //==========
 //PGM
 		}
@@ -999,11 +1015,11 @@ void R_DrawBrushModel (entity_t *e)
 	}
 
     qglPushMatrix ();
-e->angles[0] = -e->angles[0];	// stupid quake bug
-e->angles[2] = -e->angles[2];	// stupid quake bug
+	e->angles[0] = -e->angles[0];	// stupid quake bug
+	e->angles[2] = -e->angles[2];	// stupid quake bug
 	R_RotateForEntity (e);
-e->angles[0] = -e->angles[0];	// stupid quake bug
-e->angles[2] = -e->angles[2];	// stupid quake bug
+	e->angles[0] = -e->angles[0];	// stupid quake bug
+	e->angles[2] = -e->angles[2];	// stupid quake bug
 
 	GL_EnableMultitexture( true );
 	GL_SelectTexture( GL_TEXTURE0_SGIS );

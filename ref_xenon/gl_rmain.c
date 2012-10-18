@@ -235,29 +235,30 @@ void R_DrawSpriteModel (entity_t *e)
 	else
 		qglDisable( GL_ALPHA_TEST );
 
-	qglBegin (GL_QUADS);
+	xeeBegin (GL_QUADS);
 
-	qglTexCoord2f (0, 1);
+	xeeTexCoord2f (0, 1);
 	VectorMA (e->origin, -frame->origin_y, up, point);
 	VectorMA (point, -frame->origin_x, right, point);
-	qglVertex3fv (point);
+	xeeVertex3fv (point);
 
-	qglTexCoord2f (0, 0);
+	xeeTexCoord2f (0, 0);
 	VectorMA (e->origin, frame->height - frame->origin_y, up, point);
 	VectorMA (point, -frame->origin_x, right, point);
-	qglVertex3fv (point);
+	xeeVertex3fv (point);
 
-	qglTexCoord2f (1, 0);
+	xeeTexCoord2f (1, 0);
 	VectorMA (e->origin, frame->height - frame->origin_y, up, point);
 	VectorMA (point, frame->width - frame->origin_x, right, point);
-	qglVertex3fv (point);
+	xeeVertex3fv (point);
 
-	qglTexCoord2f (1, 1);
+	xeeTexCoord2f (1, 1);
 	VectorMA (e->origin, -frame->origin_y, up, point);
 	VectorMA (point, frame->width - frame->origin_x, right, point);
-	qglVertex3fv (point);
+	xeeVertex3fv (point);
 	
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 
 	qglDisable (GL_ALPHA_TEST);
 	GL_TexEnv( GL_REPLACE );
@@ -291,17 +292,21 @@ void R_DrawNullModel (void)
 	qglDisable (GL_TEXTURE_2D);
 	qglColor3fv (shadelight);
 
-	qglBegin (GL_TRIANGLE_FAN);
-	qglVertex3f (0, 0, -16);
+	xeeBegin (GL_TRIANGLE_FAN);
+	xeeVertex3f (0, 0, -16);
 	for (i=0 ; i<=4 ; i++)
-		qglVertex3f (16*cos(i*M_PI/2), 16*sin(i*M_PI/2), 0);
-	qglEnd ();
+		xeeVertex3f (16*cos(i*M_PI/2), 16*sin(i*M_PI/2), 0);
+	
+	xeeEnd ();
+	xeeSubmit();
 
-	qglBegin (GL_TRIANGLE_FAN);
-	qglVertex3f (0, 0, 16);
+	xeeBegin (GL_TRIANGLE_FAN);
+	xeeVertex3f (0, 0, 16);
 	for (i=4 ; i>=0 ; i--)
-		qglVertex3f (16*cos(i*M_PI/2), 16*sin(i*M_PI/2), 0);
-	qglEnd ();
+		xeeVertex3f (16*cos(i*M_PI/2), 16*sin(i*M_PI/2), 0);
+	
+	xeeEnd ();
+	xeeSubmit();
 
 	qglColor3f (1,1,1);
 	qglPopMatrix ();
@@ -416,7 +421,7 @@ void GL_DrawParticles( int num_particles, const particle_t particles[], const un
 	qglDepthMask( GL_FALSE );		// no z buffering
 	qglEnable( GL_BLEND );
 	GL_TexEnv( GL_MODULATE );
-	qglBegin( GL_TRIANGLES );
+	xeeBegin( GL_TRIANGLES );
 
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
@@ -438,21 +443,23 @@ void GL_DrawParticles( int num_particles, const particle_t particles[], const un
 
 		qglColor4ubv( color );
 
-		qglTexCoord2f( 0.0625, 0.0625 );
-		qglVertex3fv( p->origin );
+		xeeTexCoord2f( 0.0625, 0.0625 );
+		xeeVertex3fv( p->origin );
 
-		qglTexCoord2f( 1.0625, 0.0625 );
-		qglVertex3f( p->origin[0] + up[0]*scale, 
+		xeeTexCoord2f( 1.0625, 0.0625 );
+		xeeVertex3f( p->origin[0] + up[0]*scale, 
 			         p->origin[1] + up[1]*scale, 
 					 p->origin[2] + up[2]*scale);
 
-		qglTexCoord2f( 0.0625, 1.0625 );
-		qglVertex3f( p->origin[0] + right[0]*scale, 
+		xeeTexCoord2f( 0.0625, 1.0625 );
+		xeeVertex3f( p->origin[0] + right[0]*scale, 
 			         p->origin[1] + right[1]*scale, 
 					 p->origin[2] + right[2]*scale);
 	}
 
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
+	
 	qglDisable( GL_BLEND );
 	qglColor4f( 1,1,1,1 );
 	qglDepthMask( 1 );		// back to normal Z buffering
@@ -478,7 +485,7 @@ void R_DrawParticles (void)
 
 		qglPointSize( gl_particle_size->value );
 
-		qglBegin( GL_POINTS );
+		xeeBegin( GL_POINTS );
 		for ( i = 0, p = r_newrefdef.particles; i < r_newrefdef.num_particles; i++, p++ )
 		{
 			*(int *)color = d_8to24table[p->color];
@@ -486,9 +493,11 @@ void R_DrawParticles (void)
 
 			qglColor4ubv( color );
 
-			qglVertex3fv( p->origin );
+			xeeVertex3fv( p->origin );
 		}
-		qglEnd();
+		
+		xeeEnd();
+		xeeSubmit();
 
 		qglDisable( GL_BLEND );
 		qglColor4f( 1.0F, 1.0F, 1.0F, 1.0F );
@@ -527,13 +536,15 @@ void R_PolyBlend (void)
 
 	qglColor4fv (v_blend);
 
-	qglBegin (GL_QUADS);
+	xeeBegin (GL_QUADS);
 
-	qglVertex3f (10, 100, 100);
-	qglVertex3f (10, -100, 100);
-	qglVertex3f (10, -100, -100);
-	qglVertex3f (10, 100, -100);
-	qglEnd ();
+	xeeVertex3f (10, 100, 100);
+	xeeVertex3f (10, -100, 100);
+	xeeVertex3f (10, -100, -100);
+	xeeVertex3f (10, 100, -100);
+	
+	xeeEnd ();
+	xeeSubmit();
 
 	qglDisable (GL_BLEND);
 	qglEnable (GL_TEXTURE_2D);
@@ -844,8 +855,10 @@ void R_RenderView (refdef_t *fd)
 
 	R_DrawParticles ();
 
+	// Hud
 	R_DrawAlphaSurfaces ();
 
+	// Hit
 	R_Flash();
 
 	if (r_speeds->value)
@@ -878,11 +891,11 @@ void	R_SetGL2D (void)
 static void GL_DrawColoredStereoLinePair( float r, float g, float b, float y )
 {
 	qglColor3f( r, g, b );
-	qglVertex2f( 0, y );
-	qglVertex2f( vid.width, y );
+	xeeVertex2f( 0, y );
+	xeeVertex2f( vid.width, y );
 	qglColor3f( 0, 0, 0 );
-	qglVertex2f( 0, y + 1 );
-	qglVertex2f( vid.width, y + 1 );
+	xeeVertex2f( 0, y + 1 );
+	xeeVertex2f( vid.width, y + 1 );
 }
 
 static void GL_DrawStereoPattern( void )
@@ -897,11 +910,10 @@ static void GL_DrawStereoPattern( void )
 
 	R_SetGL2D();
 
-	qglDrawBuffer( GL_BACK_LEFT );
-
 	for ( i = 0; i < 20; i++ )
 	{
-		qglBegin( GL_LINES );
+		xeeBegin( GL_LINES );
+		
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 0 );
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 2 );
 			GL_DrawColoredStereoLinePair( 1, 0, 0, 4 );
@@ -910,7 +922,9 @@ static void GL_DrawStereoPattern( void )
 			GL_DrawColoredStereoLinePair( 1, 1, 0, 10);
 			GL_DrawColoredStereoLinePair( 1, 1, 0, 12);
 			GL_DrawColoredStereoLinePair( 0, 1, 0, 14);
-		qglEnd();
+			
+		xeeEnd();
+		xeeSubmit();
 		
 		GLimp_EndFrame();
 	}
@@ -1440,22 +1454,6 @@ void R_BeginFrame( float camera_separation )
 	qglColor4f (1,1,1,1);
 
 	/*
-	** draw buffer stuff
-	*/
-	if ( gl_drawbuffer->modified )
-	{
-		gl_drawbuffer->modified = false;
-
-		if ( gl_state.camera_separation == 0 || !gl_state.stereo_enabled )
-		{
-			if ( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
-				qglDrawBuffer( GL_FRONT );
-			else
-				qglDrawBuffer( GL_BACK );
-		}
-	}
-
-	/*
 	** texturemode stuff
 	*/
 	if ( gl_texturemode->modified )
@@ -1581,15 +1579,16 @@ void R_DrawBeam( entity_t *e )
 
 	qglColor4f( r, g, b, e->alpha );
 
-	qglBegin( GL_TRIANGLE_STRIP );
+	xeeBegin( GL_TRIANGLE_STRIP );
 	for ( i = 0; i < NUM_BEAM_SEGS; i++ )
 	{
-		qglVertex3fv( start_points[i] );
-		qglVertex3fv( end_points[i] );
-		qglVertex3fv( start_points[(i+1)%NUM_BEAM_SEGS] );
-		qglVertex3fv( end_points[(i+1)%NUM_BEAM_SEGS] );
+		xeeVertex3fv( start_points[i] );
+		xeeVertex3fv( end_points[i] );
+		xeeVertex3fv( start_points[(i+1)%NUM_BEAM_SEGS] );
+		xeeVertex3fv( end_points[(i+1)%NUM_BEAM_SEGS] );
 	}
-	qglEnd();
+	xeeEnd();
+	xeeSubmit();
 
 	qglEnable( GL_TEXTURE_2D );
 	qglDisable( GL_BLEND );

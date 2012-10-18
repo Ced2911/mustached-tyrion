@@ -257,7 +257,7 @@ QUAKE2_XEE = \
 	$(BUILDDIR)/ref_xenon/xee/gl_png_utils.o \
 	$(BUILDDIR)/ref_xenon/xee/gl_states.o \
 	$(BUILDDIR)/ref_xenon/xee/gl_textures.o \
-	$(BUILDDIR)/ref_xenon/xee/gl_vertices.o \
+	$(BUILDDIR)/ref_xenon/xee/vertices.o \
 	$(BUILDDIR)/ref_xenon/xee/VecMatrix.o \
 	$(BUILDDIR)/ref_xenon/xee/VecVector.o \
 	$(BUILDDIR)/ref_xenon/xee/video_xe.o \
@@ -730,16 +730,13 @@ $(BUILDDIR)/ref_xenon/xee/gl_matrices.o : $(REF_XE_DIR)/xee/gl_matrices.c
 $(BUILDDIR)/ref_xenon/xee/gl_png_utils.o : $(REF_XE_DIR)/xee/gl_png_utils.c
 	$(DO_SHLIB_CC)
 
-$(BUILDDIR)/ref_xenon/xee/gl_png_utils.o : $(REF_XE_DIR)/xee/gl_png_utils.c
-	$(DO_SHLIB_CC)
-
 $(BUILDDIR)/ref_xenon/xee/gl_states.o : $(REF_XE_DIR)/xee/gl_states.c
 	$(DO_SHLIB_CC)
 
 $(BUILDDIR)/ref_xenon/xee/gl_textures.o : $(REF_XE_DIR)/xee/gl_textures.c
 	$(DO_SHLIB_CC)
 
-$(BUILDDIR)/ref_xenon/xee/gl_vertices.o : $(REF_XE_DIR)/xee/gl_vertices.c
+$(BUILDDIR)/ref_xenon/xee/vertices.o : $(REF_XE_DIR)/xee/vertices.c
 	$(DO_SHLIB_CC)
 
 $(BUILDDIR)/ref_xenon/xee/VecMatrix.o : $(REF_XE_DIR)/xee/VecMatrix.c

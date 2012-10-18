@@ -52,11 +52,11 @@ void R_RenderDlight (dlight_t *light)
 	}
 #endif
 
-	qglBegin (GL_TRIANGLE_FAN);
+	xeeBegin (GL_TRIANGLE_FAN);
 	qglColor3f (light->color[0]*0.2, light->color[1]*0.2, light->color[2]*0.2);
 	for (i=0 ; i<3 ; i++)
 		v[i] = light->origin[i] - vpn[i]*rad;
-	qglVertex3fv (v);
+	xeeVertex3fv (v);
 	qglColor3f (0,0,0);
 	for (i=16 ; i>=0 ; i--)
 	{
@@ -64,9 +64,10 @@ void R_RenderDlight (dlight_t *light)
 		for (j=0 ; j<3 ; j++)
 			v[j] = light->origin[j] + vright[j]*cos(a)*rad
 				+ vup[j]*sin(a)*rad;
-		qglVertex3fv (v);
+		xeeVertex3fv (v);
 	}
-	qglEnd ();
+	xeeEnd ();
+	xeeSubmit();
 }
 
 /*

@@ -150,13 +150,13 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 	lerp = s_lerped[0];
 
 	GL_LerpVerts( paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv );
-
+#if 0
 	if ( gl_vertex_arrays->value )
 	{
 		float colorArray[MAX_VERTS*4];
 
 		qglEnableClientState( GL_VERTEX_ARRAY );
-		qglVertexPointer( 3, GL_FLOAT, 16, s_lerped );	// padded for SIMD
+		xeeVertexPointer( 3, GL_FLOAT, 16, s_lerped );	// padded for SIMD
 
 //		if ( currententity->flags & ( RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE ) )
 		// PMM - added double damage shell
@@ -194,11 +194,11 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 			if (count < 0)
 			{
 				count = -count;
-				qglBegin (GL_TRIANGLE_FAN);
+				xeeBegin (GL_TRIANGLE_FAN);
 			}
 			else
 			{
-				qglBegin (GL_TRIANGLE_STRIP);
+				xeeBegin (GL_TRIANGLE_STRIP);
 			}
 
 			// PMM - added double damage shell
@@ -209,7 +209,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					index_xyz = order[2];
 					order += 3;
 
-					qglVertex3fv( s_lerped[index_xyz] );
+					xeeVertex3fv( s_lerped[index_xyz] );
 
 				} while (--count);
 			}
@@ -218,7 +218,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				do
 				{
 					// texture coordinates come from the draw list
-					qglTexCoord2f (((float *)order)[0], ((float *)order)[1]);
+					xeeTexCoord2f (((float *)order)[0], ((float *)order)[1]);
 					index_xyz = order[2];
 
 					order += 3;
@@ -231,13 +231,15 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 
 				} while (--count);
 			}
-			qglEnd ();
+			xeeEnd ();
+			xeeSubmit()
 		}
 
 		if ( qglUnlockArraysEXT != 0 )
 			qglUnlockArraysEXT();
 	}
 	else
+#endif
 	{
 		while (1)
 		{
@@ -248,11 +250,11 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 			if (count < 0)
 			{
 				count = -count;
-				qglBegin (GL_TRIANGLE_FAN);
+				xeeBegin (GL_TRIANGLE_FAN);
 			}
 			else
 			{
-				qglBegin (GL_TRIANGLE_STRIP);
+				xeeBegin (GL_TRIANGLE_STRIP);
 			}
 
 			if ( currententity->flags & ( RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE ) )
@@ -263,7 +265,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					order += 3;
 
 					qglColor4f( shadelight[0], shadelight[1], shadelight[2], alpha);
-					qglVertex3fv (s_lerped[index_xyz]);
+					xeeVertex3fv (s_lerped[index_xyz]);
 
 				} while (--count);
 			}
@@ -272,7 +274,7 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 				do
 				{
 					// texture coordinates come from the draw list
-					qglTexCoord2f (((float *)order)[0], ((float *)order)[1]);
+					xeeTexCoord2f (((float *)order)[0], ((float *)order)[1]);
 					index_xyz = order[2];
 					order += 3;
 
@@ -280,11 +282,12 @@ void GL_DrawAliasFrameLerp (dmdl_t *paliashdr, float backlerp)
 					l = shadedots[verts[index_xyz].lightnormalindex];
 					
 					qglColor4f (l* shadelight[0], l*shadelight[1], l*shadelight[2], alpha);
-					qglVertex3fv (s_lerped[index_xyz]);
+					xeeVertex3fv (s_lerped[index_xyz]);
 				} while (--count);
 			}
 
-			qglEnd ();
+			xeeEnd ();
+			xeeSubmit();
 		}
 	}
 
@@ -333,10 +336,10 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 		if (count < 0)
 		{
 			count = -count;
-			qglBegin (GL_TRIANGLE_FAN);
+			xeeBegin (GL_TRIANGLE_FAN);
 		}
 		else
-			qglBegin (GL_TRIANGLE_STRIP);
+			xeeBegin (GL_TRIANGLE_STRIP);
 
 		do
 		{
@@ -353,7 +356,7 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 			point[1] -= shadevector[1]*(point[2]+lheight);
 			point[2] = height;
 //			height -= 0.001;
-			qglVertex3fv (point);
+			xeeVertex3fv (point);
 
 			order += 3;
 
@@ -361,7 +364,8 @@ void GL_DrawAliasShadow (dmdl_t *paliashdr, int posenum)
 
 		} while (--count);
 
-		qglEnd ();
+		xeeEnd ();
+		xeeSubmit();
 	}	
 }
 
@@ -792,12 +796,13 @@ void R_DrawAliasModel (entity_t *e)
 	qglDisable( GL_CULL_FACE );
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 	qglDisable( GL_TEXTURE_2D );
-	qglBegin( GL_TRIANGLE_STRIP );
+	xeeBegin( GL_TRIANGLE_STRIP );
 	for ( i = 0; i < 8; i++ )
 	{
-		qglVertex3fv( bbox[i] );
+		xeeVertex3fv( bbox[i] );
 	}
-	qglEnd();
+	xeeEnd();
+	xeeSubmit();
 	qglEnable( GL_TEXTURE_2D );
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	qglEnable( GL_CULL_FACE );

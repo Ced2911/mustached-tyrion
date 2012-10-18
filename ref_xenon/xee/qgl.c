@@ -11,6 +11,7 @@
 
 #define QGL
 #include "../ref_gl/gl_local.h"
+#include "../xee.h"
 
 void ( APIENTRY * qglAccum )(GLenum op, GLfloat value);
 void ( APIENTRY * qglAlphaFunc )(GLenum func, GLclampf ref);
@@ -1084,8 +1085,7 @@ qboolean QGL_Init( const char *dllname )
 	qglMTexCoord2fSGIS = 0;
 #if 1 // real !!!
 	qglAlphaFunc                 = 	glAlphaFunc;
-	qglArrayElement              = 	glArrayElement;
-	qglBegin                     = 	glBegin;
+	qglBegin                     = 	xeeBegin;
 	qglBindTexture               = 	glBindTexture;
 	qglBlendFunc                 = 	glBlendFunc;
 	qglClear                     = 	glClear;
@@ -1097,17 +1097,14 @@ qboolean QGL_Init( const char *dllname )
 	qglColor4fv                  = 	glColor4fv;
 	qglColor3ubv                 = 	glColor3ubv;
 	qglColor4ubv                 = 	glColor4ubv;
-	qglColorPointer              = 	glColorPointer;
 	qglCullFace                  = 	glCullFace;
 	qglDeleteTextures            = 	glDeleteTextures;
 	qglDepthFunc                 = 	glDepthFunc;
 	qglDepthMask                 = 	glDepthMask;
 	qglDepthRange                = 	glDepthRange;
 	qglDisable                   = 	glDisable;
-	qglDrawBuffer                = 	glDrawBuffer;
 	qglEnable                    = 	glEnable;
-	qglEnableClientState         = 	glEnableClientState;
-	qglEnd                       = 	glEnd;
+	qglEnd                       = 	xeeEnd;
 	qglFinish                    = 	glFinish;
 	qglFrontFace                 = 	glFrontFace;
 	qglFrustum                   = 	glFrustum;	
@@ -1127,25 +1124,25 @@ qboolean QGL_Init( const char *dllname )
 	qglScalef                    = 	glScalef;
 	qglScissor                   = 	glScissor;
 	qglShadeModel                = 	glShadeModel;
-	qglTexCoord2f                = 	glTexCoord2f;
+	qglTexCoord2f                = 	xeeTexCoord2f;
 	qglTexEnvf                   = 	glTexEnvf;
 	qglTexImage2D                = 	glTexImage2D;
 	qglTexParameterf             = 	glTexParameterf;
 	qglTexSubImage2D             = 	glTexSubImage2D;
 	qglTranslatef                = 	glTranslatef;
-	qglVertex2f                  = 	glVertex2f;
-	qglVertex2fv                 = 	glVertex2fv;
-	qglVertex3f                  = 	glVertex3f;
-	qglVertex3fv                 = 	glVertex3fv;
+	qglVertex2f                  = 	xeeVertex2f;
+	qglVertex2fv                 = 	xeeVertex2fv;
+	qglVertex3f                  = 	xeeVertex3f;
+	qglVertex3fv                 = 	xeeVertex3fv;
 	qglViewport                  = 	glViewport;
 	
 	// extentions
-	qglVertexPointer             = 	glVertexPointer;
-	qglTexCoordPointer           = 	glTexCoordPointer;
-	qglColorPointer              = 	glColorPointer;
-	qglDisableClientState        = 	glDisableClientState;
-	qglEnableClientState         = 	glEnableClientState;
-	qglDrawArrays                = 	glDrawArrays;
+	//qglVertexPointer             = 	glVertexPointer;
+	//qglTexCoordPointer           = 	glTexCoordPointer;
+	//qglColorPointer              = 	glColorPointer;
+	//qglDisableClientState        = 	glDisableClientState;
+	//qglEnableClientState         = 	glEnableClientState;
+	//qglDrawArrays                = 	glDrawArrays;
 	/*
 	qglPointParameterfEXT = glPointParameterf;
 	qglPointParameterfvEXT = glPointParameterfv;
